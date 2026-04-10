@@ -20,7 +20,9 @@ app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
 # =========================
 # DATABASE CONFIG
 # =========================
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://root:@localhost/heat_health_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = (
+    f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@localhost/{os.getenv('DB_NAME')}"
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -122,52 +124,96 @@ def register_page():
 def register():
     data = request.form
 
-    # ✅ CHECK FULLNAME (NEW)
-    existing_fullname = User.query.filter_by(fullname=data['fullname']).first()
-    if existing_fullname:
-        flash("This full name is already registered. Please use your real full name to avoid duplication.", "fullname_error")
-        return redirect('/register_page')
+    fullname = data['fullname']
+    username = data['username']
+    password = data['password']
 
-    # ✅ CHECK USERNAME
-    existing_user = User.query.filter_by(username=data['username']).first()
-    if existing_user:
-        flash("Username already exists. Please choose a different one.", "error")
-        return redirect('/register_page')
+    # ❌ WEAK PASSWORD CHECK
+    if len(password) < 8:
+        return render_template('register.html',
+            password_error="Password must be at least 8 characters long",
+            form_data=data
+        )
 
-    # ✅ CREATE USER
+    if password.isdigit() or password.isalpha():
+        return render_template('register.html',
+            password_error="Password must contain both letters and numbers",
+            form_data=data
+        )
+
+    role = data['role']
+
+    # ❌ ROLE NOT SELECTED
+    if not role:
+        return render_template('register.html',
+            role_error="Please select a role",
+            form_data=data
+        )
+
+    # ❌ FULLNAME EXISTS
+    if User.query.filter_by(fullname=fullname).first():
+        return render_template('register.html',
+            fullname_error="Full name already registered",
+            form_data=data
+        )
+
+    # ❌ USERNAME EXISTS
+    if User.query.filter_by(username=username).first():
+        return render_template('register.html',
+            username_error="Username already exists",
+            form_data=data
+        )
+
+    # 🔐 ✅ PUT VALIDATION HERE (IMPORTANT)
+    if role == "HealthWorker":
+        worker_code = data.get('worker_code')
+
+        if not worker_code:
+            return render_template('register.html',
+                worker_code_error="Health Worker Code is required",
+                form_data=data
+            )
+
+        if worker_code != os.getenv("HEALTH_WORKER_CODE"):
+            return render_template('register.html',
+                worker_code_error="Invalid Health Worker Code",
+                form_data=data
+            )
+
+    # ✅ NOW CREATE USER (ONLY AFTER ALL VALIDATIONS)
     new_user = User(
-        fullname=data['fullname'],
-        username=data['username'],
-        password=generate_password_hash(data['password']),
-        role=data['role']
+        fullname=fullname,
+        username=username,
+        password=generate_password_hash(password),
+        role=role
     )
 
     db.session.add(new_user)
     db.session.commit()
 
-    # 🔵 IF RESIDENT
-    if data['role'] == "Resident":
+    # 🔵 RESIDENT
+    if role == "Resident":
         new_resident = Resident(
-            name=data['fullname'],
+            name=fullname,
             gender=data.get('gender'),
             address=data.get('address'),
             contact=data.get('resident_contact'),
-            user_id=new_user.id   # 🔥 LINK HERE
+            user_id=new_user.id
         )
         db.session.add(new_resident)
-        db.session.commit()
 
-    # 🟢 IF HEALTH WORKER
-    elif data['role'] == "HealthWorker":
+    # 🟢 HEALTH WORKER
+    elif role == "HealthWorker":
         new_worker = HealthWorker(
-            name=data['fullname'],
+            name=fullname,
             position=data.get('position'),
             contact=data.get('worker_contact'),
-            user_id=new_user.id   # 🔥 LINK
+            user_id=new_user.id
         )
         db.session.add(new_worker)
-        db.session.commit()
-    
+
+    db.session.commit()
+
     flash("Account created successfully! You can now login 🎉", "success")
     return redirect('/')
 
@@ -177,19 +223,26 @@ def register():
 # =========================
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.form
+    username = request.form['username']
+    password = request.form['password']
 
-    user = User.query.filter_by(username=data['username']).first()
+    user = User.query.filter_by(username=username).first()
 
     # ❌ USER NOT FOUND
     if not user:
-        flash("Invalid username", "error")
-        return redirect('/')
+        return render_template(
+            'index.html',
+            username_error="Invalid username",
+            username=username
+        )
 
     # ❌ WRONG PASSWORD
-    if not check_password_hash(user.password, data['password']):
-        flash("Incorrect password", "error")
-        return redirect('/')
+    if not check_password_hash(user.password, password):
+        return render_template(
+            'index.html',
+            password_error="Incorrect password",
+            username=username
+        )
 
     # ✅ SUCCESS LOGIN
     session['user'] = user.username
@@ -198,12 +251,11 @@ def login():
 
     flash("Login successful!", "success")
 
-    # ✅ REDIRECT BASED ON ROLE
     if user.role == "Resident":
         return redirect('/resident_dashboard')
     else:
         return redirect('/health_worker_dashboard')
-
+    
 # =========================
 # AUTOMATIC INJECT USERNAME/ROLE
 # =========================
@@ -303,6 +355,16 @@ def change_password():
         flash("Current password is incorrect!", "error")
         return redirect(request.referrer)
 
+    # ❌ NEW: PASSWORD LENGTH VALIDATION
+    if len(new_password) < 8:
+        flash("Password must be at least 8 characters!", "error")
+        return redirect(request.referrer)
+
+    # ❌ NEW: LETTER + NUMBER CHECK
+    if new_password.isdigit() or new_password.isalpha():
+        flash("Password must contain both letters and numbers!", "error")
+        return redirect(request.referrer)
+
     # ✅ Check if new passwords match
     if new_password != confirm_password:
         flash("New passwords do not match!", "error")
@@ -314,7 +376,6 @@ def change_password():
 
     flash("Password updated successfully!", "success")
     return redirect(request.referrer)
-
 
 # =========================
 # RESIDENT DASHBOARD
@@ -334,7 +395,7 @@ def resident_dashboard():
 
     # ✅ FIX: CHECK RESIDENT
     if not resident:
-        flash("No resident profile found. Please contact admin.", "danger")
+        flash("No resident profile found.", "error")
         return redirect('/')
 
     # 🔥 NOW SAFE
@@ -770,7 +831,6 @@ def temperature_records():
         role=session.get('role')
     )
     
-import requests
 
 def get_online_temperature(city):
     api_key = os.getenv("OPENWEATHER_API_KEY")
@@ -884,7 +944,7 @@ def auto_fetch_temperature():
             print("Auto fetch failed")
             return
 
-        barangays = ["Danahao", "Buangan", "Tubod", "Tuntunan", "Nahawan"]
+        barangays = ["Danahao"]
 
         current_date = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%I:%M:%S %p")
@@ -913,17 +973,63 @@ def auto_fetch_temperature():
 
         db.session.commit()
 
-        print("✅ Auto temperature saved for ALL barangays")
+        print("✅ Auto temperature saved for barangay")
 
 
 # =========================
 # SCHEDULER 
 # =========================
+#scheduler = BackgroundScheduler()
+#job = None  # 🔥 track job
+
+#job = scheduler.add_job(func=auto_fetch_temperature, trigger="interval", minutes=30)
+
+#if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+#    scheduler.start()
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=auto_fetch_temperature, trigger="interval", minutes=30)
-scheduler.start()
+job = None
+auto_running = False  # 
+
+# =========================
+# STOP AUTO FETCH
+# =========================
+@app.route('/stop_auto_temp', methods=['POST'])
+def stop_auto_temp():
+    global job, auto_running
+
+    if job:
+        scheduler.remove_job(job.id)
+        job = None
+
+    auto_running = False
+    print("⛔ Auto fetch STOPPED")
+
+    return jsonify({"status": "stopped"})
 
 
+# =========================
+# START AUTO FETCH
+# =========================
+@app.route('/start_auto_temp', methods=['POST'])
+def start_auto_temp():
+    global job, auto_running
+
+    if not auto_running:
+        if not scheduler.running:
+            scheduler.start()
+
+        job = scheduler.add_job(
+            func=auto_fetch_temperature,
+            trigger="interval",
+            minutes=30
+        )
+
+        auto_running = True
+        print("▶ Auto fetch STARTED")
+
+    return jsonify({"status": "started"})
+
+    
 # =========================
 # DELETE TEMPERATURE
 # =========================
@@ -1029,19 +1135,22 @@ def compute_heat_index(temp, humidity=60):
 
 def get_heat_level(heat_index):
     if heat_index <= 0:
-        return "SAFE", "level-safe", "🟢"
+        return "NORMAL", "level-normal", "🟢"
 
     elif heat_index < 27:
-        return "SAFE", "level-safe", "🟢"
+        return "NORMAL", "level-normal", "🟢"
 
     elif heat_index < 32:
-        return "CAUTION", "level-warning", "⚠️"
+        return "CAUTION", "level-caution", "⚠️"
 
     elif heat_index < 41:
+        return "EXTREME CAUTION", "level-extreme-caution", "🌡️"
+
+    elif heat_index < 54:
         return "DANGER", "level-danger", "🔥"
 
     else:
-        return "EXTREME DANGER", "level-extreme", "🚨"
+        return "EXTREME DANGER", "level-extreme-danger", "🚨"
 
 
 # =========================
@@ -1266,7 +1375,13 @@ def add_case():
         return redirect('/')
 
     data = request.form
+
     resident = Resident.query.filter_by(name=data['resident_name']).first()
+
+    if not resident:
+        flash("Resident not found!", "error")
+        return redirect(url_for('illness_records'))
+
     worker = HealthWorker.query.filter_by(user_id=session['user_id']).first()
 
     case = Illness(
@@ -1392,9 +1507,9 @@ def delete_user(id):
 # =========================
 @app.before_request
 def require_login():
-    if 'user' not in session and request.endpoint not in [
-        'home', 'login', 'register', 'register_page', 'static'
-    ]:
+    allowed_routes = ['home', 'login', 'register', 'register_page', 'static']
+
+    if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect('/')
         
 @app.route('/logout')

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body class="register-page">
 
 <div class="frame">
 
@@ -19,48 +19,62 @@
     <h2>Register Account</h2>
     <p class="subtitle">Create your account</p>
 
-    <!-- ✅ FLASH HERE (ONLY ONE) -->
-    <div id="flash-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash {{ category }}">
-                    <span>{{ message }}</span>
-                    <button class="close-btn" onclick="this.parentElement.remove()">×</button>
-                </div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
-
     <!-- ✅ FORM CONNECTED -->
     <form action="/register" method="POST">
 
-    <div class="input-field">
-        <label>Full Name</label>
-        <input type="text" name="fullname" required>
-    </div>
+        <div class="input-field">
+            <label>Full Name</label>
+            <input type="text" name="fullname"
+                value="{{ form_data.fullname if form_data else '' }}"
+                class="{% if fullname_error %}input-error{% endif %}" required>
 
-        <!-- USERNAME -->
+            {% if fullname_error %}
+                <small class="error-text">{{ fullname_error }}</small>
+            {% endif %}
+        </div>
+
         <div class="input-field">
             <label>Username</label>
-            <input type="text" name="username" required>
+            <input type="text" name="username"
+                value="{{ form_data.username if form_data else '' }}"
+                class="{% if username_error %}input-error{% endif %}" required>
+
+            {% if username_error %}
+                <small class="error-text">{{ username_error }}</small>
+            {% endif %}
         </div>
 
-        <!-- PASSWORD -->
         <div class="input-field">
             <label>Password</label>
-            <input type="password" name="password" required>
+            <input type="password" name="password"
+                class="{% if password_error %}input-error{% endif %}" required>
+
+            {% if password_error %}
+                <small class="error-text">{{ password_error }}</small>
+            {% endif %}
         </div>
 
-        <!-- ROLE -->
         <div class="input-field">
             <label>Role</label>
-            <select name="role" id="role" onchange="toggleFields()">
+            <select name="role" id="role"
+                    onchange="toggleFields()"
+                    class="{% if role_error %}input-error{% endif %}">
+
                 <option value="">Select Role</option>
-                <option value="Resident">Resident</option>
-                <option value="HealthWorker">HealthWorker</option>
+                <option value="Resident"
+                    {% if form_data and form_data.role == 'Resident' %}selected{% endif %}>
+                    Resident
+                </option>
+
+                <option value="HealthWorker"
+                    {% if form_data and form_data.role == 'HealthWorker' %}selected{% endif %}>
+                    HealthWorker
+                </option>
             </select>
+
+            {% if role_error %}
+                <small class="error-text">{{ role_error }}</small>
+            {% endif %}
         </div>
 
         <!-- 🔵 RESIDENT FIELDS -->
@@ -76,13 +90,9 @@
 
             <div class="input-field">
                 <label>Address</label>
-                <select name="address" required>
+                <select name="address" id="address">
                     <option value="">Select Barangay</option>
                         <option value="Danahao">Danahao</option>
-                        <option value="Buangan">Buangan</option>
-                        <option value="Tubod">Tubod</option>
-                        <option value="Tuntunan">Tuntunan</option>
-                        <option value="Nahawan">Nahawan</option>
                 </select>
             </div>
 
@@ -98,7 +108,29 @@
 
             <div class="input-field">
                 <label>Position</label>
-                <input type="text" name="position">
+                <select name="position"
+                    class="{% if position_error %}input-error{% endif %}">
+
+                    <option value="">Select Position</option>
+                    <option value="Nurse"
+                        {% if form_data and form_data.position == 'Nurse' %}selected{% endif %}>
+                        Nurse
+                    </option>
+
+                    <option value="Midwife"
+                        {% if form_data and form_data.position == 'Midwife' %}selected{% endif %}>
+                        Midwife
+                    </option>
+
+                    <option value="Barangay Health Worker"
+                        {% if form_data and form_data.position == 'Barangay Health Worker' %}selected{% endif %}>
+                        Barangay Health Worker
+                    </option>
+                </select>
+
+                {% if position_error %}
+                    <small class="error-text">{{ position_error }}</small>
+                {% endif %}
             </div>
 
             <div class="input-field">
@@ -106,6 +138,14 @@
                 <input type="text" name="worker_contact">
             </div>
 
+            <div class="input-field">
+                <label>Health Worker Code</label>
+                <input type="text" name="worker_code">
+
+                {% if worker_code_error %}
+                    <small class="error-text">{{ worker_code_error }}</small>
+                {% endif %}
+            </div>
         </div>
 
         <button type="submit" class="btn">Register</button>
@@ -122,32 +162,29 @@
 function toggleFields() {
     const role = document.getElementById("role").value;
 
-    document.getElementById("residentFields").style.display =
-        role === "Resident" ? "block" : "none";
+    const residentFields = document.getElementById("residentFields");
+    const workerFields = document.getElementById("workerFields");
+    const address = document.getElementById("address");
 
-    document.getElementById("workerFields").style.display =
-        role === "HealthWorker" ? "block" : "none";
+    if (role === "Resident") {
+        residentFields.style.display = "block";
+        workerFields.style.display = "none";
+        address.required = true;   // ✅ only required here
+    } else if (role === "HealthWorker") {
+        residentFields.style.display = "none";
+        workerFields.style.display = "block";
+        address.required = false;
+    } else {
+        residentFields.style.display = "none";
+        workerFields.style.display = "none";
+        address.required = false;
+    }
 }
 </script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-
-    // AUTO HIDE AFTER 3 SECONDS
-    setTimeout(() => {
-        document.querySelectorAll(".flash").forEach(msg => {
-            msg.style.opacity = "0";
-            setTimeout(() => msg.remove(), 300);
-        });
-    }, 3000);
-
-    // HIDE WHEN USER TYPES
-    document.querySelectorAll("input").forEach(input => {
-        input.addEventListener("input", () => {
-            document.querySelectorAll(".flash").forEach(msg => msg.remove());
-        });
-    });
-
+    toggleFields(); // ✅ keep this only
 });
 </script>
 

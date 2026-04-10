@@ -41,10 +41,16 @@ body { margin:0; font-family: Arial; background:#f4f7f6; }
 }
 
 .summary-card {
-    background:#f4f7f6;
-    padding:15px;
-    border-radius:10px;
-    text-align:center;
+    background: #ffffff;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: 0.2s;
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
 }
 
 .summary-card h4 {
@@ -61,10 +67,50 @@ body { margin:0; font-family: Arial; background:#f4f7f6; }
 .orange { color:orange; }
 .green { color:green; }
 
+/* 🔥 HEAT LEVEL COLORS */
+.level-normal {
+    background: #2ecc71;
+    color: white;
+}
+
+.level-caution {
+    background: #f1c40f;
+    color: black;
+}
+
+.level-extreme-caution {
+    background: #e67e22;
+    color: white;
+}
+
+.level-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.level-extreme-danger {
+    background: #8e0000;
+    color: white;
+}
+
 /* 🔥 STATUS */
 .status {
-    display:flex; justify-content:space-between;
-    padding:8px 0; border-bottom:1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.status:hover {
+    transform: scale(1.02);
+}
+
+.status span:last-child {
+    font-weight: bold;
+    font-size: 16px;
 }
 
 /* 🔥 LIST ITEMS */
@@ -105,6 +151,20 @@ canvas { margin-top:30px; }
 
 .download { background:#0b0c2a; color:white; }
 .back-btn { background:#ddd; color:#333; text-decoration:none; }
+
+.report-summary {
+    background: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    width: 650px;
+    max-width: 95%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: 0.3s;
+}
+
+.report-summary:hover {
+    transform: translateY(-5px);
+}
 </style>
 </head>
 
@@ -151,11 +211,30 @@ canvas { margin-top:30px; }
 
 <hr>
 
-<div class="status"><span>Normal</span><span>{{ normal }}</span></div>
-<div class="status"><span>Caution</span><span>{{ caution }}</span></div>
-<div class="status"><span>Extreme Caution</span><span>{{ extreme_caution }}</span></div>
-<div class="status"><span>Danger</span><span>{{ danger }}</span></div>
-<div class="status"><span>Extreme Danger</span><span>{{ extreme_danger }}</span></div>
+<div class="status level-normal">
+    <span>Normal</span>
+    <span>{{ normal }}</span>
+</div>
+
+<div class="status level-caution">
+    <span>Caution</span>
+    <span>{{ caution }}</span>
+</div>
+
+<div class="status level-extreme-caution">
+    <span>Extreme Caution</span>
+    <span>{{ extreme_caution }}</span>
+</div>
+
+<div class="status level-danger">
+    <span>Danger</span>
+    <span>{{ danger }}</span>
+</div>
+
+<div class="status level-extreme-danger">
+    <span>Extreme Danger</span>
+    <span>{{ extreme_danger }}</span>
+</div>
 
 <!-- 🔥 CHART -->
 <canvas id="chart"></canvas>
@@ -207,25 +286,46 @@ canvas { margin-top:30px; }
     link.click();
     });
     }
-    </script>
+</script>
 
-    <script>
-    new Chart(document.getElementById('chart'), {
-    type:'bar',
-    data:{
-    labels:['Normal','Caution','Extreme','Danger','Extreme Danger'],
-    datasets:[{
-        data:[
-            {{ normal }},
-            {{ caution }},
-            {{ extreme_caution }},
-            {{ danger }},
-            {{ extreme_danger }}
-        ]
-    }]
+<script>
+const ctx = document.getElementById('chart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Normal', 'Caution', 'Extreme Caution', 'Danger', 'Extreme Danger'],
+        datasets: [{
+            data: [
+                {{ normal }},
+                {{ caution }},
+                {{ extreme_caution }},
+                {{ danger }},
+                {{ extreme_danger }}
+            ],
+            backgroundColor: [
+                '#2ecc71',
+                '#f1c40f',
+                '#e67e22',
+                '#e74c3c',
+                '#8e0000'
+            ],
+            borderRadius: 8
+        }]
     },
-    options:{plugins:{legend:{display:false}}}
-    });
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+            }
+        }
+    }
+});
 </script>
 
 </body>

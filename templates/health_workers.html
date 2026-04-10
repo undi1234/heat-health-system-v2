@@ -199,7 +199,7 @@
 
         <form id="editWorkerForm" method="POST">
 
-            <input type="hidden" id="worker_id">
+            <input type="hidden" name="id" id="worker_id">
 
             <label>Name</label>
             <input type="text" id="worker_name" readonly>
@@ -243,15 +243,24 @@ function closeDeleteModal() {
     document.getElementById("deleteModal").style.display = "none";
 }
 
-// Close when clicking outside
+function closeWorkerModal() {
+    document.getElementById("editWorkerModal").style.display = "none";
+}
+
 window.onclick = function(event) {
-    const modal = document.getElementById("deleteModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
+    const deleteModal = document.getElementById("deleteModal");
+    const editModal = document.getElementById("editWorkerModal");
+
+    if (event.target == deleteModal) {
+        deleteModal.style.display = "none";
+    }
+
+    if (event.target == editModal) {
+        editModal.style.display = "none";
     }
 }
 </script>
-</script>
+
 
 {% include 'logout_modal.html' %}
 

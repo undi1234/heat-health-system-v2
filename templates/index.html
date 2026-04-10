@@ -9,8 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
-
+<body class="login-page">
 <div class="frame">
 
     <div class="icon">
@@ -25,25 +24,25 @@
 
         <div class="input-field">
             <label>Username</label>
-            <input type="text" name="username" required>
+            <input type="text" name="username"
+                value="{{ username or '' }}"
+                class="{% if username_error %}input-error{% endif %}"
+                required>
+
+            {% if username_error %}
+                <small class="error-text">{{ username_error }}</small>
+            {% endif %}
         </div>
 
         <div class="input-field">
             <label>Password</label>
-            <input type="password" name="password" required>
-        </div>
+            <input type="password" name="password"
+                class="{% if password_error %}input-error{% endif %}"
+                required>
 
-        <div id="flash-container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">
-                        <span>{{ message }}</span>
-                        <button class="close-btn" onclick="this.parentElement.remove()">×</button>
-                    </div>
-                {% endfor %}
+            {% if password_error %}
+                <small class="error-text">{{ password_error }}</small>
             {% endif %}
-            {% endwith %}
         </div>
 
         <button type="submit" class="btn">Login</button>
@@ -51,6 +50,8 @@
     </form>
 
     <div class="register-box" onclick="goRegister()">Register Account</div>
+
+</div>   
 
 <script>
 function goRegister(){

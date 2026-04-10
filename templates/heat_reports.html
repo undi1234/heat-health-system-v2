@@ -8,91 +8,124 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7f6;
-        }
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7f6;
+}
 
-        /* HEADER */
-        .topbar {
-            background: #e60000;
-            color: white;
-            padding: 15px 30px;
-        }
+/* HEADER */
+.topbar {
+    background: #e60000;
+    color: white;
+    padding: 15px 30px;
+}
 
-        .topbar h2 {
-            margin: 0;
-        }
+.topbar h2 {
+    margin: 0;
+}
 
-        /* CENTER */
-        .report-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 50px;
-        }
+/* CENTER */
+.report-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
 
-        /* CARD */
-        .report-summary {
-            background: #fff;
-            padding: 40px;
-            border-radius: 15px;
-            width: 650px;
-            max-width: 95%;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
+/* CARD */
+.report-summary {
+    background: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    width: 650px;
+    max-width: 95%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: 0.3s;
+}
 
-        .report-summary h2 {
-            text-align: center;
-            margin-bottom: 25px;
-        }
+.report-summary:hover {
+    transform: translateY(-5px);
+}
 
-        .report-summary p {
-            margin: 10px 0;
-            font-size: 16px;
-        }
+.report-summary h2 {
+    text-align: center;
+    margin-bottom: 25px;
+}
 
-        /* STATUS */
-        .status {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
+.report-summary p {
+    margin: 10px 0;
+    font-size: 16px;
+}
 
-        /* CHART */
-        canvas {
-            margin-top: 30px;
-        }
+/* STATUS */
+.status {
+display: flex;
+justify-content: space-between;
+padding: 12px 15px;
+border-radius: 8px;
+margin-bottom: 10px;
+font-weight: 500;
+}
 
-        /* BUTTONS */
-        .btn-group {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 25px;
-        }
+/* CHART */
+canvas {
+    margin-top: 30px;
+}
 
-        .btn {
-            padding: 12px 20px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-        }
+/* BUTTONS */
+.btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 25px;
+}
 
-        .download {
-            background: #0b0c2a;
-            color: white;
-        }
+.btn {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-        .back-btn {
-            background: #ddd;
-            color: #333;
-            text-decoration: none;
-        }
-    </style>
+.download {
+    background: #0b0c2a;
+    color: white;
+}
+
+.back-btn {
+    background: #ddd;
+    color: #333;
+    text-decoration: none;
+}
+
+/* ================== HEAT INDEX STANDARD COLORS ================== */
+.level-normal {
+    background: #2ecc71; /* Green */
+    color: white;
+}
+
+.level-caution {
+    background: #f1c40f; /* Yellow */
+    color: black;
+}
+
+.level-extreme-caution {
+    background: #e67e22; /* Orange */
+    color: white;
+}
+
+.level-danger {
+    background: #e74c3c; /* Red */
+    color: white;
+}
+
+.level-extreme-danger {
+    background: #8e0000; /* Dark Red */
+    color: white;
+}
+</style>
 </head>
 
 <body>
@@ -115,27 +148,27 @@
 
         <hr>
 
-        <div class="status">
+        <div class="status level-normal">
             <span>Normal</span>
             <span>{{ normal }}</span>
         </div>
 
-        <div class="status">
+        <div class="status level-caution">
             <span>Caution</span>
             <span>{{ caution }}</span>
         </div>
 
-        <div class="status">
+        <div class="status level-extreme-caution">
             <span>Extreme Caution</span>
             <span>{{ extreme_caution }}</span>
         </div>
 
-        <div class="status">
+        <div class="status level-danger">
             <span>Danger</span>
             <span>{{ danger }}</span>
         </div>
 
-        <div class="status">
+        <div class="status level-extreme-danger">
             <span>Extreme Danger</span>
             <span>{{ extreme_danger }}</span>
         </div>
@@ -188,7 +221,15 @@ new Chart(ctx, {
                 {{ extreme_caution }},
                 {{ danger }},
                 {{ extreme_danger }}
-            ]
+            ],
+            backgroundColor: [
+                '#2ecc71',  // Normal
+                '#f1c40f',  // Caution
+                '#e67e22',  // Extreme Caution
+                '#e74c3c',  // Danger
+                '#8e0000'   // Extreme Danger
+            ],
+            borderRadius: 8
         }]
     },
     options: {

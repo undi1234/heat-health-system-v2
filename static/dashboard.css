@@ -227,6 +227,55 @@ h1 {
 .green { color: green; }
 .orange { color: orange; }
 
+
+/* ================= HEAT INDEX STANDARD COLORS ================= */
+
+/* TEXT COLORS (optional for numbers) */
+.level-normal { color: #2ecc71; }
+.level-caution { color: #f1c40f; }
+.level-extreme-caution { color: #e67e22; }
+.level-danger { color: #e74c3c; }
+.level-extreme-danger { color: #8e0000; }
+
+/* BADGE STYLE */
+.level-normal-bg,
+.level-caution-bg,
+.level-extreme-caution-bg,
+.level-danger-bg,
+.level-extreme-danger-bg {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* BACKGROUND COLORS */
+.level-normal-bg {
+    background: #eafaf1;
+    color: #27ae60;
+}
+
+.level-caution-bg {
+    background: #fef9e7;
+    color: #b7950b;
+}
+
+.level-extreme-caution-bg {
+    background: #fdf2e9;
+    color: #d35400;
+}
+
+.level-danger-bg {
+    background: #fdecea;
+    color: #c0392b;
+}
+
+.level-extreme-danger-bg {
+    background: #f5e6e6;
+    color: #8e0000;
+}
+
 /* ================= BUTTONS ================= */
 .buttons {
     margin-top: 20px;
@@ -295,6 +344,61 @@ h1 {
 .btn:hover {
     transform: translateY(-2px);
     opacity: 0.9;
+}
+
+/* ================= AUTO BUTTONS (MODERN STYLE) ================= */
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+/* Base style */
+.auto-btn {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px; /* 🔥 pill style */
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+/* START (Green) */
+.auto-btn.start {
+    background: #2ecc71;
+    color: white;
+}
+
+.auto-btn.start:hover {
+    background: #27ae60;
+    transform: translateY(-2px);
+}
+
+/* STOP (Red) */
+.auto-btn.stop {
+    background: #e74c3c;
+    color: white;
+}
+
+.auto-btn.stop:hover {
+    background: #c0392b;
+    transform: translateY(-2px);
+}
+
+/* Disabled state */
+.auto-btn:disabled {
+    background: #ccc !important;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.7;
+}
+
+/* Click effect */
+.auto-btn:active {
+    transform: scale(0.95);
 }
 
 /* ================= SIDEBAR ================= */
@@ -949,4 +1053,30 @@ tbody tr {
     color: #cc0000;
     border-radius: 8px;
     font-weight: bold;
+}
+
+/* ================= AUTO CONTROLS ================= */
+.controls {
+    margin-top: 10px;
+}
+
+#autoBtn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* 🟢 RUNNING */
+#autoBtn.running {
+    background: #2ecc71;
+    color: white;
+}
+
+/* 🔴 STOPPED */
+#autoBtn.stopped {
+    background: #e74c3c;
+    color: white;
 }

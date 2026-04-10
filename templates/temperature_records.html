@@ -46,7 +46,11 @@
                 <h3>Temperature Monitoring</h3>
                 <p class="time">Last updated: {{ current_time }}</p>
             </div>
-            <button class="refresh" onclick="refreshData()">⟳ Refresh Data</button>
+            <div class="controls">
+                <button class="auto-btn stop" onclick="stopAutoTemp()">⛔ Stop</button>
+                <button class="auto-btn start" onclick="startAutoTemp()">▶ Start</button>
+                <button class="refresh" onclick="refreshData()">⟳ Refresh Data</button>
+            </div>
         </div>
         
         <!-- SOURCE -->
@@ -62,10 +66,6 @@
 
         <select name="barangay" id="barangayFilter" onchange="filterBarangay()" required>
             <option value="Danahao">Danahao</option>
-            <option value="Buangan">Buangan</option>
-            <option value="Tubod">Tubod</option>
-            <option value="Tuntunan">Tuntunan</option>
-            <option value="Nahawan">Nahawan</option>
         </select>
 
         <button type="submit" onclick="this.innerText='Loading...'">
@@ -199,9 +199,26 @@ function refreshData() {
     location.reload();
 }
 
+function startAutoTemp() {
+    fetch('/start_auto_temp', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        document.querySelector(".start").disabled = true;
+        document.querySelector(".stop").disabled = false;
+    });
+}
+
+function stopAutoTemp() {
+    fetch('/stop_auto_temp', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+        document.querySelector(".start").disabled = false;
+        document.querySelector(".stop").disabled = true;
+    });
+}
 
 // AUTO REFRESH EVERY 60 SECONDS
-//setInterval(refreshData, 60000);
+setInterval(refreshData, 300000);
 </script>
 
 {% include 'logout_modal.html' %}

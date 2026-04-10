@@ -72,13 +72,21 @@
                     <td>{{ "%.2f"|format(h.heat_index) }}°C</td>
 
                     <td>
-                        {% if h.status == "Danger" or h.status == "Extreme Danger" %}
-                            <span class="danger">{{ h.status }}</span>
-                        {% elif h.status == "Extreme Caution" %}
-                            <span class="warning">{{ h.status }}</span>
-                        {% else %}
-                            <span class="safe">{{ h.status }}</span>
-                        {% endif %}
+                        <span class="
+                            {% if h.status|upper == 'NORMAL' %}
+                                level-normal-bg
+                            {% elif h.status|upper == 'CAUTION' %}
+                                level-caution-bg
+                            {% elif h.status|upper == 'EXTREME CAUTION' %}
+                                level-extreme-caution-bg
+                            {% elif h.status|upper == 'DANGER' %}
+                                level-danger-bg
+                            {% else %}
+                                level-extreme-danger-bg
+                            {% endif %}
+                        ">
+                            {{ h.status }}
+                        </span>
                     </td>
 
                     <td>{{ h.date }}</td>
