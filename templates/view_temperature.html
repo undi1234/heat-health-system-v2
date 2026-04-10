@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Temperature</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <style>
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 70px); /* full height minus topbar */
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .info {
+            margin: 15px 0;
+            font-size: 18px;
+        }
+
+        .info span {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .temp {
+            font-size: 40px;
+            font-weight: bold;
+            color: #ff5733;
+            margin: 20px 0;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #2980b9;
+        }
+
+        .safe { color: #2ecc71; }
+        .warning { color: #f1c40f; }
+        .danger { color: #e74c3c; }
+    </style>
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <h2>Temperature Details</h2>
+</div>
+
+<!-- 📦 CONTENT -->
+<div class="container">
+    <div class="card">
+
+        <h2>🌡️ Temperature Record</h2>
+
+        <div class="temp {{ 'safe' if record.value < 27 else 'warning' if record.value < 35 else 'danger' }}">
+            {{ record.value }} °C
+        </div>
+
+        <div class="info">
+            <span>Date:</span> {{ record.date }}
+        </div>
+
+        <div class="info">
+            <span>Time:</span> {{ record.time }}
+        </div>
+
+        <a href="{{ url_for('temperature_records') }}" class="back-btn">
+            ⬅ Back to Records
+        </a>
+
+    </div>
+</div>
+
+</body>
+</html>

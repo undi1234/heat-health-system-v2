@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ title }}</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { margin:0; font-family: Arial; background:#f4f7f6; }
+
+.topbar {
+    background:#e60000; color:white; padding:15px 30px;
+}
+
+.report-container {
+    display:flex; justify-content:center; margin-top:50px;
+}
+
+.report-summary {
+    background:#fff; padding:40px; border-radius:15px;
+    width:700px; max-width:95%;
+    box-shadow:0 8px 25px rgba(0,0,0,0.1);
+}
+
+.report-summary h2 {
+    text-align:center; margin-bottom:10px;
+}
+
+.subtitle {
+    text-align:center; color:#777; margin-bottom:20px;
+}
+
+/* 🔥 SUMMARY CARDS */
+.summary-grid {
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.summary-card {
+    background:#f4f7f6;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+}
+
+.summary-card h4 {
+    font-size:13px;
+    color:#666;
+}
+
+.summary-card p {
+    font-size:22px;
+    font-weight:bold;
+}
+
+.red { color:red; }
+.orange { color:orange; }
+.green { color:green; }
+
+/* 🔥 STATUS */
+.status {
+    display:flex; justify-content:space-between;
+    padding:8px 0; border-bottom:1px solid #eee;
+}
+
+/* 🔥 LIST ITEMS */
+.list-item {
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    background:#f2f2f2;
+    border-radius:8px;
+    margin-top:8px;
+}
+
+.badge {
+    background:#ffe5b4;
+    padding:5px 10px;
+    border-radius:10px;
+    font-size:12px;
+}
+
+.no-data {
+    text-align:center;
+    padding:10px;
+    color:#999;
+    font-style:italic;
+}
+
+canvas { margin-top:30px; }
+
+.btn-group {
+    display:flex; justify-content:center;
+    gap:20px; margin-top:25px;
+}
+
+.btn {
+    padding:12px 20px; border-radius:8px;
+    border:none; cursor:pointer;
+}
+
+.download { background:#0b0c2a; color:white; }
+.back-btn { background:#ddd; color:#333; text-decoration:none; }
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <h2>🌡️ HEAT HEALTH MONITORING SYSTEM</h2>
+    <small>Barangay Temperature Monitoring</small>
+</div>
+
+<div class="report-container">
+<div class="report-summary" id="report-content">
+
+<h2>📊 {{ title }}</h2>
+<p class="subtitle">{{ subtitle }}</p>
+
+<!-- 🔥 SUMMARY CARDS -->
+<div class="summary-grid">
+    <div class="summary-card">
+        <h4>Total Cases</h4>
+        <p>{{ total_cases }}</p>
+    </div>
+
+    <div class="summary-card">
+        <h4>Critical Days</h4>
+        <p class="red">{{ critical_days }}</p>
+    </div>
+
+    <div class="summary-card">
+        <h4>Active Cases</h4>
+        <p class="orange">{{ active_cases }}</p>
+    </div>
+
+    <div class="summary-card">
+        <h4>Recovered</h4>
+        <p class="green">{{ recovered_cases }}</p>
+    </div>
+</div>
+
+<!-- 🔥 HEAT DATA -->
+<p><strong>Total Records:</strong> {{ total_records }}</p>
+<p><strong>Avg Temperature:</strong> {{ avg_temp }} °C</p>
+<p><strong>Avg Heat Index:</strong> {{ avg_heat_index }} °C</p>
+
+<hr>
+
+<div class="status"><span>Normal</span><span>{{ normal }}</span></div>
+<div class="status"><span>Caution</span><span>{{ caution }}</span></div>
+<div class="status"><span>Extreme Caution</span><span>{{ extreme_caution }}</span></div>
+<div class="status"><span>Danger</span><span>{{ danger }}</span></div>
+<div class="status"><span>Extreme Danger</span><span>{{ extreme_danger }}</span></div>
+
+<!-- 🔥 CHART -->
+<canvas id="chart"></canvas>
+
+<!-- 🔥 HEAT TRENDS -->
+<h3 style="margin-top:30px;">Heat Index Trends</h3>
+
+{% if heat_trends %}
+    {% for h in heat_trends %}
+        <div class="list-item">
+            <span>{{ h.date }}</span>
+            <span>{{ h.heat_index }} °C</span>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="no-data">No heat records yet</div>
+{% endif %}
+
+<!-- 🔥 RECENT CASES -->
+<h3 style="margin-top:25px;">Recent Illness Cases</h3>
+
+{% if recent_cases %}
+    {% for c in recent_cases %}
+        <div class="list-item">
+            <span>{{ c.resident.name if c.resident else 'Unknown' }}</span>
+            <span class="badge">{{ c.status }}</span>
+        </div>
+    {% endfor %}
+{% else %}
+    <div class="no-data">No illness cases</div>
+{% endif %}
+
+</div>
+</div>
+
+<div class="btn-group">
+<a href="{{ url_for('reports') }}" class="btn back-btn">⬅ Back</a>
+<button class="btn download" onclick="downloadReport()">📄 Download</button>
+</div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+    function downloadReport(){
+    html2canvas(document.getElementById("report-content")).then(canvas=>{
+    let link=document.createElement("a");
+    link.download="{{ filename }}";
+    link.href=canvas.toDataURL();
+    link.click();
+    });
+    }
+    </script>
+
+    <script>
+    new Chart(document.getElementById('chart'), {
+    type:'bar',
+    data:{
+    labels:['Normal','Caution','Extreme','Danger','Extreme Danger'],
+    datasets:[{
+        data:[
+            {{ normal }},
+            {{ caution }},
+            {{ extreme_caution }},
+            {{ danger }},
+            {{ extreme_danger }}
+        ]
+    }]
+    },
+    options:{plugins:{legend:{display:false}}}
+    });
+</script>
+
+</body>
+</html>

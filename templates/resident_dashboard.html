@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <h1>Dashboard</h1>
+    <p class="subtitle">Resident View</p>
+
+    <div class="barangay-label">
+        📍<strong>{{ barangay }}</strong>
+    </div>
+
+    <!-- CARDS -->
+    <div class="cards">
+
+        <div class="card">
+            <h3>Current Temperature</h3>
+            <p class="big">🌡️ {{ temperature }}°C</p>
+        </div>
+
+        <div class="card">
+            <h3>Current Heat Index</h3>
+            <p class="big">🌡️ {{ heat_index }}°C</p>
+        </div>
+
+        <div class="card">
+            <h3>Heat Risk Level</h3>
+            <p class="danger-box {{ level_class }}">
+                {{ level_icon }} {{ level_text }}
+            </p>
+        </div>
+
+    </div>
+
+    <!-- SAFETY REMINDER -->
+    <div class="reminders">
+        <h3>🛡️ Safety Reminders</h3>
+        {% for r in reminders %}
+        <div class="reminder-item">
+            <span class="number">{{ loop.index }}</span>
+
+            <div class="reminder-text">
+                <div class="reminder-en">{{ r.en }}</div>
+                <div class="reminder-bi">{{ r.bi }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+        <div class="action-card">
+            <h3>View Safety Alerts ⚠️</h3>
+            <p>Check current heat warnings and safety guidelines</p>
+            <a href="{{ url_for('safety_alerts') }}">
+                <button class="btn dark">View Safety Alerts</button>
+            </a>
+        </div>
+
+        <div class="action-card">
+            <h3>Report Illness Case 📝</h3>
+            <p>Submit a heat-related illness report</p>
+            <a href="{{ url_for('report_illness') }}">
+                <button class="btn">Report Illness Case</button>
+            </a>
+        </div>
+
+        <div class="action-card">
+            <h3>Check My Case Status 📋</h3>
+            <p>View the status of your illness reports</p>
+            <a href="{{ url_for('case_status') }}">
+                <button class="btn">Check My Case Status</button>
+            </a>
+        </div>
+    </div>
+
+</div>
+
+{% include 'logout_modal.html' %}
+
+<script>
+    // AUTO REFRESH EVERY 5 minutes
+    setInterval(() => {
+        location.reload();
+    }, 300000);
+</script>
+
+</body>
+</html>

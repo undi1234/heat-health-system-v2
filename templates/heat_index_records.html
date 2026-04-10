@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Index Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div> <!-- ✅ ADD THIS LINE -->
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <h1>Heat Index Records</h1>
+    <p class="subtitle">Calculate heat index values and danger levels</p>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <h3>Heat Index Monitoring</h3>
+
+            <div style="display:inline-block;">
+                <a href="{{ url_for('heat_reports') }}" class="btn dark generate-btn">
+                    📄 Generate Heat Reports
+                </a>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <table>
+            <thead>
+                <tr>
+                    <th>HEAT ID</th>
+                    <th>Temperature</th>
+                    <th>Heat Index</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+
+        <tbody>
+            {% if data and data|length > 0 %}
+                {% for h in data %}
+                <tr>
+                    <td>HI{{ "%03d"|format(h.id) }}</td>
+                    <td>{{ "%.2f"|format(h.temperature) }}°C</td>
+                    <td>{{ "%.2f"|format(h.heat_index) }}°C</td>
+
+                    <td>
+                        {% if h.status == "Danger" or h.status == "Extreme Danger" %}
+                            <span class="danger">{{ h.status }}</span>
+                        {% elif h.status == "Extreme Caution" %}
+                            <span class="warning">{{ h.status }}</span>
+                        {% else %}
+                            <span class="safe">{{ h.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ h.date }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="5" class="no-data">
+                        No heat index records found
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

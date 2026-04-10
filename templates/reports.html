@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div> 
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <h1>Heat & Health Reports</h1>
+    <p class="subtitle">Generate reports for monitoring and decision-making</p>
+
+    <!-- SUMMARY CARDS -->
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Cases</h3>
+            <p class="number">{{ total_cases }}</p>
+            <small>All time records</small>
+        </div>
+
+        <div class="card">
+            <h3>Critical Days</h3>
+            <p class="number red">{{ critical_days }}</p>
+            <small>Extreme danger level</small>
+        </div>
+
+        <div class="card">
+            <h3>Active Cases</h3>
+            <p class="number orange">{{ active_cases }}</p>
+            <small>Under treatment</small>
+        </div>
+
+        <div class="card">
+            <h3>Recovered</h3>
+            <p class="number green">{{ recovered_cases }}</p>
+            <small>Successfully treated</small>
+        </div>
+
+    </div>
+
+    <!-- TWO PANELS -->
+    <div class="panels">
+
+        <!-- LEFT: HEAT INDEX -->
+        <div class="panel">
+            <h3>Heat Index Trends</h3>
+
+            {% if heat_trends %}
+                
+                {% for heat in heat_trends %}
+                <div class="item">
+                    <span>{{ heat.date }} - {{ heat.temperature }}°C</span>
+
+                    <span class="
+                        {% if heat.status == 'Extreme Danger' %}danger
+                        {% elif heat.status == 'Danger' %}warning
+                        {% else %}safe
+                        {% endif %}
+                    ">
+                        {{ heat.status }}
+                    </span>
+                </div>
+                {% endfor %}
+
+            {% else %}
+                <div class="item empty">
+                    <span>No heat records yet</span>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <!-- RIGHT: ILLNESS -->
+        <div class="panel">
+            <h3>Recent Illness Cases</h3>
+
+            {% for case in recent_cases %}
+            <div class="item">
+                <span>{{ case.resident.name if case.resident else 'Unknown' }}</span>
+
+                <span class="
+                    {% if case.status == 'Recovered' %}recovered
+                    {% elif case.status == 'Under Treatment' %}treatment
+                    {% elif case.status == 'Reported' %}reported
+                    {% else %}warning
+                    {% endif %}
+                ">
+                    {{ case.status }}
+                </span>
+            </div>
+            {% else %}
+            <p class="no-data">No illness records yet</p>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- GENERATE REPORT -->
+    <div class="report-box">
+        <h3>Generate Reports</h3>
+
+    <!-- 🔥 FILTER BUTTONS -->
+<div class="buttons">
+
+    <a href="{{ url_for('report', type='weekly') }}" class="btn dark">
+        ⬇ Weekly Summary
+    </a>
+
+    <a href="{{ url_for('report', type='monthly') }}" class="btn light">
+        ⬇ Monthly Report
+    </a>
+
+    <a href="{{ url_for('report', type='annual') }}" class="btn light">
+        ⬇ Annual Statistics
+    </a>
+
+</div>
+    </div>
+
+</div>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

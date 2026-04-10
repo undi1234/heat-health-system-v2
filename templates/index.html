@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+
+    <!-- CONNECT CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="frame">
+
+    <div class="icon">
+        <span>🌡️</span>
+    </div>
+
+    <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+    <p class="subtitle">Barangay Temperature & Heat Index Monitoring</p>
+
+    <!-- ✅ FORM CONNECTED -->
+    <form action="/login" method="POST">
+
+        <div class="input-field">
+            <label>Username</label>
+            <input type="text" name="username" required>
+        </div>
+
+        <div class="input-field">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <div id="flash-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        <span>{{ message }}</span>
+                        <button class="close-btn" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <button type="submit" class="btn">Login</button>
+
+    </form>
+
+    <div class="register-box" onclick="goRegister()">Register Account</div>
+
+<script>
+function goRegister(){
+    window.location.href = "/register_page";
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputs = document.querySelectorAll("input");
+    const flashMessages = document.querySelectorAll(".flash");
+
+    inputs.forEach(input => {
+        input.addEventListener("input", () => {
+            flashMessages.forEach(msg => {
+                msg.style.display = "none";
+            });
+        });
+    });
+
+    setTimeout(() => {
+        document.querySelectorAll(".flash").forEach(msg => {
+            msg.style.display = "none";
+        });
+    }, 3000);
+});
+</script>
+
+
+</body>
+</html>

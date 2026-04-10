@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Residents Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+
+        <h3>⚠️ Confirm Delete</h3>
+
+        <p id="deleteMessage">
+            Are you sure you want to delete this record?
+        </p>
+
+        <p class="warning-text">
+            This action cannot be undone.
+        </p>
+
+        <form id="deleteForm" method="POST">
+            <button type="submit" class="btn-danger">Yes, Delete</button>
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        </form>
+
+    </div>
+</div>
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div> <!-- ✅ ADD THIS LINE -->
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN CONTENT -->
+<div class="main">
+
+    <h1>Residents Management</h1>
+    <p class="subtitle">Manage resident records in the system</p>
+
+    <div class="table-container">
+
+        <!-- HEADER -->
+        <div class="table-header">
+            <h3>Resident Records</h3>
+                <button class="add-btn" onclick="openAddResidentModal()">+ Add Resident</button>
+        </div>
+
+        <!-- ➕ ADD RESIDENT MODAL -->
+        <div id="addResidentModal" class="modal">
+            <div class="modal-content">
+
+                <span class="close" onclick="closeAddResidentModal()">&times;</span>
+
+                <h3>Add Resident</h3>
+                <p class="subtitle">Enter resident details</p>
+
+            <form action="/add_resident" method="POST" class="form-grid">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender">
+                        <option>Male</option>
+                        <option>Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group full">
+                    <label>Address</label>
+                    <input type="text" name="address" required>
+                </div>
+
+                <div class="form-group full">
+                    <label>Contact</label>
+                    <input type="text" name="contact" required>
+                </div>
+
+                <div class="button-group full">
+                    <button type="submit" class="submit-btn">Add Resident</button>
+                </div>
+
+            </form>
+
+                
+            </div>
+        </div>
+
+        <script>
+        function openAddResidentModal() {
+            document.getElementById("addResidentModal").style.display = "flex";
+        }
+
+        function closeAddResidentModal() {
+            document.getElementById("addResidentModal").style.display = "none";
+        }
+        </script>
+
+        <!-- SEARCH -->
+        <input type="text" id="searchInput" placeholder="Search residents..." class="search">
+        
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("searchInput");
+            const noDataMessage = document.getElementById("noDataMessage");
+
+            searchInput.addEventListener("keyup", function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll("#dataTable tbody tr"); // ✅ moved inside
+
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+
+                    if (text.includes(filter)) {
+                        row.style.display = "";
+                        visibleCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // ✅ FIX: also check if table is empty
+                if (visibleCount === 0) {
+                    noDataMessage.style.display = "block";
+                } else {
+                    noDataMessage.style.display = "none";
+                }
+            });
+        });
+        </script>
+
+        <!-- TABLE -->
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Resident ID</th>
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Address</th>
+                    <th>Contact Number</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for r in residents %}
+                <tr>
+                    <td>R{{ "%03d"|format(r.id) }}</td>
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.gender }}</td>
+                    <td>{{ r.address }}</td>
+                    <td>{{ r.contact }}</td>
+
+                    <td>
+                        <!-- EDIT -->
+                        <button class="edit"
+                        onclick="openEditModal(
+                            '{{ r.id }}',
+                            '{{ r.name | escape }}',
+                            '{{ r.gender }}',
+                            '{{ r.address | escape }}',
+                            '{{ r.contact | escape }}'
+                        )">✏️</button>
+
+                        <!-- DELETE -->
+                        <form action="{{ url_for('delete_resident', id=r.id) }}" method="POST" style="display:inline;">
+                            <button type="button" class="delete"
+                                onclick='openDeleteModal(
+                                    {{ r.id }},
+                                    {{ r.name | tojson }}
+                                )'>
+                                🗑️
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
+            No residents found
+        </p> 
+
+    </div>
+
+</div>
+
+<!-- ✏️ EDIT RESIDENT MODAL -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <h3>Edit Resident</h3>
+        <p class="subtitle">Update resident information</p>
+
+    <form id="editForm" method="POST" class="form-grid">
+
+        <input type="hidden" name="id" id="edit_id">
+
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="edit_name" readonly>
+        </div>
+
+        <div class="form-group">
+            <label>Gender</label>
+            <input type="text" id="edit_gender" readonly>
+        </div>
+
+        <div class="form-group full">
+            <label>Address</label>
+            <input type="text" name="address" id="edit_address" required>
+        </div>
+
+        <div class="form-group full">
+            <label>Contact Number</label>
+            <input type="text" name="contact" id="edit_contact" required>
+        </div>
+
+        <div class="button-group full">
+            <button type="submit" class="submit-btn">Update Resident</button>
+        </div>
+
+    </form>
+
+    </div>
+</div>
+
+<script>
+function openEditModal(id, name, gender, address, contact) {
+    document.getElementById("editModal").style.display = "flex";
+
+    document.getElementById("edit_id").value = id;
+    document.getElementById("edit_name").value = name;
+    document.getElementById("edit_gender").value = gender;
+    document.getElementById("edit_address").value = address;
+    document.getElementById("edit_contact").value = contact;
+
+    document.getElementById("editForm").action = "/update_resident/" + id;
+}
+
+function openDeleteModal(id, name) {
+    const form = document.getElementById("deleteForm");
+    const message = document.getElementById("deleteMessage");
+
+    form.action = "/delete_resident/" + id;
+    message.innerHTML = `Are you sure you want to delete <strong>${name}</strong>?`;
+
+    document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
+}
+
+// Close when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById("deleteModal");
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

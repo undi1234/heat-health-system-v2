@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="frame">
+
+    <div class="icon">
+        <span>🌡️</span>
+    </div>
+
+    <h2>Register Account</h2>
+    <p class="subtitle">Create your account</p>
+
+    <!-- ✅ FLASH HERE (ONLY ONE) -->
+    <div id="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    <span>{{ message }}</span>
+                    <button class="close-btn" onclick="this.parentElement.remove()">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- ✅ FORM CONNECTED -->
+    <form action="/register" method="POST">
+
+    <div class="input-field">
+        <label>Full Name</label>
+        <input type="text" name="fullname" required>
+    </div>
+
+        <!-- USERNAME -->
+        <div class="input-field">
+            <label>Username</label>
+            <input type="text" name="username" required>
+        </div>
+
+        <!-- PASSWORD -->
+        <div class="input-field">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+
+        <!-- ROLE -->
+        <div class="input-field">
+            <label>Role</label>
+            <select name="role" id="role" onchange="toggleFields()">
+                <option value="">Select Role</option>
+                <option value="Resident">Resident</option>
+                <option value="HealthWorker">HealthWorker</option>
+            </select>
+        </div>
+
+        <!-- 🔵 RESIDENT FIELDS -->
+        <div id="residentFields" style="display:none;">
+
+            <div class="input-field">
+                <label>Gender</label>
+                <select name="gender">
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+            </div>
+
+            <div class="input-field">
+                <label>Address</label>
+                <select name="address" required>
+                    <option value="">Select Barangay</option>
+                        <option value="Danahao">Danahao</option>
+                        <option value="Buangan">Buangan</option>
+                        <option value="Tubod">Tubod</option>
+                        <option value="Tuntunan">Tuntunan</option>
+                        <option value="Nahawan">Nahawan</option>
+                </select>
+            </div>
+
+            <div class="input-field">
+                <label>Contact</label>
+                <input type="text" name="resident_contact">
+            </div>
+
+        </div>
+
+        <!-- 🟢 HEALTH WORKER FIELDS -->
+        <div id="workerFields" style="display:none;">
+
+            <div class="input-field">
+                <label>Position</label>
+                <input type="text" name="position">
+            </div>
+
+            <div class="input-field">
+                <label>Contact</label>
+                <input type="text" name="worker_contact">
+            </div>
+
+        </div>
+
+        <button type="submit" class="btn">Register</button>
+
+    </form>
+    <div class="back-login">
+        <button type="button" onclick="window.location.href='/'" class="btn secondary">
+            ← Back to Login
+        </button>
+    </div>
+</div>
+
+<script>
+function toggleFields() {
+    const role = document.getElementById("role").value;
+
+    document.getElementById("residentFields").style.display =
+        role === "Resident" ? "block" : "none";
+
+    document.getElementById("workerFields").style.display =
+        role === "HealthWorker" ? "block" : "none";
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    // AUTO HIDE AFTER 3 SECONDS
+    setTimeout(() => {
+        document.querySelectorAll(".flash").forEach(msg => {
+            msg.style.opacity = "0";
+            setTimeout(() => msg.remove(), 300);
+        });
+    }, 3000);
+
+    // HIDE WHEN USER TYPES
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", () => {
+            document.querySelectorAll(".flash").forEach(msg => msg.remove());
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>

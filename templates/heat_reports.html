@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Reports</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7f6;
+        }
+
+        /* HEADER */
+        .topbar {
+            background: #e60000;
+            color: white;
+            padding: 15px 30px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+        }
+
+        /* CENTER */
+        .report-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+        }
+
+        /* CARD */
+        .report-summary {
+            background: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            width: 650px;
+            max-width: 95%;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .report-summary h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .report-summary p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        /* STATUS */
+        .status {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* CHART */
+        canvas {
+            margin-top: 30px;
+        }
+
+        /* BUTTONS */
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download {
+            background: #0b0c2a;
+            color: white;
+        }
+
+        .back-btn {
+            background: #ddd;
+            color: #333;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="topbar">
+    <h2>🌡️ HEAT HEALTH MONITORING SYSTEM</h2>
+    <small>Barangay Temperature Monitoring</small>
+</div>
+
+<!-- REPORT -->
+<div class="report-container">
+    <div class="report-summary" id="report-content">
+
+        <h2>📊 Heat Index Summary Report</h2>
+
+        <p><strong>Total Records:</strong> {{ total_records }}</p>
+        <p><strong>Avg Temperature:</strong> {{ avg_temp }} °C</p>
+        <p><strong>Avg Heat Index:</strong> {{ avg_heat_index }} °C</p>
+
+        <hr>
+
+        <div class="status">
+            <span>Normal</span>
+            <span>{{ normal }}</span>
+        </div>
+
+        <div class="status">
+            <span>Caution</span>
+            <span>{{ caution }}</span>
+        </div>
+
+        <div class="status">
+            <span>Extreme Caution</span>
+            <span>{{ extreme_caution }}</span>
+        </div>
+
+        <div class="status">
+            <span>Danger</span>
+            <span>{{ danger }}</span>
+        </div>
+
+        <div class="status">
+            <span>Extreme Danger</span>
+            <span>{{ extreme_danger }}</span>
+        </div>
+
+        <!-- CHART -->
+        <canvas id="statusChart"></canvas>
+
+    </div>
+</div>
+
+<!-- BUTTONS (NOT INCLUDED IN DOWNLOAD) -->
+<div class="btn-group">
+    <a href="{{ url_for('heat_index_records') }}" class="btn back-btn">
+        ⬅ Back
+    </a>
+
+    <button class="btn download" onclick="downloadReport()">
+        📄 Download Report
+    </button>
+</div>
+
+<!-- DOWNLOAD -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+function downloadReport() {
+    const report = document.getElementById("report-content");
+
+    html2canvas(report).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "heat_index_report.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    });
+}
+</script>
+
+<!-- CHART -->
+<script>
+const ctx = document.getElementById('statusChart');
+
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Normal', 'Caution', 'Extreme Caution', 'Danger', 'Extreme Danger'],
+        datasets: [{
+            data: [
+                {{ normal }},
+                {{ caution }},
+                {{ extreme_caution }},
+                {{ danger }},
+                {{ extreme_danger }}
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+</script>
+
+</body>
+</html>

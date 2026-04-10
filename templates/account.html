@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Information</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+        
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<div class="main">
+
+    <h1>Account Information</h1>
+    <p class="subtitle">Manage your personal details</p>
+
+    <div class="container">
+        <form method="POST">
+
+            <div class="form-grid">
+
+                <!-- FULL NAME -->
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="fullname" value="{{ user.fullname }}" required>
+                </div>
+
+                <!-- USERNAME -->
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" value="{{ user.username }}" readonly>
+                </div>
+
+                <!-- ROLE -->
+                <div class="form-group">
+                    <label>Role</label>
+                    <input type="text" value="{{ user.role }}" readonly>
+                </div>
+
+                {% if user.role == "Resident" %}
+
+                <!-- ADDRESS -->
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" name="address" value="{{ profile.address }}">
+                </div>
+
+                <!-- CONTACT -->
+                <div class="form-group">
+                    <label>Contact</label>
+                    <input type="text" name="contact" value="{{ profile.contact }}">
+                </div>
+
+                {% else %}
+
+                <!-- POSITION -->
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" name="position" value="{{ profile.position }}">
+                </div>
+
+                <!-- CONTACT -->
+                <div class="form-group">
+                    <label>Contact</label>
+                    <input type="text" name="contact" value="{{ profile.contact }}">
+                </div>
+
+                {% endif %}
+
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="submit-btn">Update Profile</button>
+            </div>
+            
+        </form>
+
+    </div>
+
+    <!-- PASSWORD -->
+    <div class="container password-section">
+
+        <h3>🔒 Change Password</h3>
+
+        <form action="/change_password" method="POST" class="form-grid">
+
+            <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" name="current_password" required>
+            </div>
+
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+
+            <div class="button-group full">
+                <button type="submit" class="submit-btn">Update Password</button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

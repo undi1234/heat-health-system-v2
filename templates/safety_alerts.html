@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Safety Alert</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+        
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <h1>Heat Safety Alert</h1>
+    <p class="subtitle">Current heat warnings and safety guidelines</p>
+
+    <!-- ALERT BOX -->
+    <div class="alert-box">
+
+        <h2>⚠️ HEAT SAFETY ALERT</h2>
+        <p class="small">Active Warning System</p>
+        <p class="time">🕒 {{ current_time }}</p>
+        
+        
+        <div class="barangay-label">
+        📍<strong>{{ barangay }}</strong>
+        </div>
+
+        <div class="alert-stats">
+            <div class="stat">
+                <h4>Current Heat Index</h4>
+                <p>🌡️ {{ heat_index }}°C</p>
+            </div>
+
+            <div class="stat">
+                <h4>Current Temperature</h4>
+                <p>🌡️ {{ temperature }}°C</p>
+            </div>
+
+            <!-- ✅ MOVE WARNING HERE -->
+            <div class="stat">
+                <h4>Warning Level</h4>
+
+                <div class="warning-center">
+                    <span class="warning-badge {{ level_class }}">
+                        {{ level_icon }} {{ level_text }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    <!-- REMINDERS -->
+    <div class="reminders">
+        <h3>🛡️ Safety Reminders</h3>
+
+        {% for r in reminders %}
+        <div class="reminder-item">
+            <span class="number">{{ loop.index }}</span>
+
+            <div class="reminder-text">
+                <div class="reminder-en">{{ r.en }}</div>
+                <div class="reminder-bi">{{ r.bi }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- SYMPTOMS -->
+    <div class="symptoms">
+        <h3>⚠️ Heat-Related Illness Symptoms</h3>
+        <p>Watch for these symptoms and report immediately:</p>
+
+        <ul>
+            <li>Dizziness or fainting</li>
+            <li>Excessive sweating or no sweating with hot, dry skin</li>
+            <li>Rapid heartbeat</li>
+            <li>Nausea or vomiting</li>
+            <li>Muscle cramps</li>
+            <li>Headache or confusion</li>
+        </ul>
+    </div>
+
+    <!-- EMERGENCY -->
+    <div class="emergency">
+        <h3>🚨 Emergency Contact</h3>
+        <p>If you or someone you know is experiencing severe symptoms, call emergency services immediately or go to the nearest health center.</p>
+    </div>
+
+</div>
+
+{% include 'logout_modal.html' %}
+
+<script>
+    // AUTO REFRESH EVERY 5 minutes
+    setInterval(() => {
+        location.reload();
+    }, 300000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Illness Status</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <div class="page-header">
+        <h1>My Illness Status</h1>
+        <p class="subtitle">View the status of your illness reports</p>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card">
+
+        <h3>📄 My Illness Cases</h3>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Symptoms</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Handled By</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for case in cases %}
+                <tr>
+                    <td>{{ case.id }}</td>
+                    <td>{{ case.symptoms }}</td>
+                    <td>
+                        <span class="status-badge {{ case.status | lower }}">
+                            {{ case.status }}
+                        </span>
+                    </td>
+                    <td>{{ case.date }}</td>
+                    <td>{{ case.healthworker.name if case.healthworker else 'Pending' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- NOTE BOX -->
+    <div class="note-box">
+        <strong>Note:</strong> If you have any questions about your case status, please contact your assigned health worker or visit the barangay health center.
+    </div>
+
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

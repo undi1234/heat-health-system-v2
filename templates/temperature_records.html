@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button> 
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <h1>Temperature Records</h1>
+    <p class="subtitle">Real-time temperature data from online weather service</p>
+
+    <div class="container">
+
+        <!-- HEADER -->
+        <div class="header">
+            <div>
+                <h3>Temperature Monitoring</h3>
+                <p class="time">Last updated: {{ current_time }}</p>
+            </div>
+            <button class="refresh" onclick="refreshData()">⟳ Refresh Data</button>
+        </div>
+        
+        <!-- SOURCE -->
+        <div class="source">
+            Temperature Source: <span>Online Weather API</span>
+        </div>
+
+        <form action="/add_temperature" method="POST" class="temp-form">
+        <select name="city" required>
+            <option value="">Select Location</option>
+            <option value="Clarin,Bohol,PH">Clarin, Bohol</option>
+        </select>
+
+        <select name="barangay" id="barangayFilter" onchange="filterBarangay()" required>
+            <option value="Danahao">Danahao</option>
+            <option value="Buangan">Buangan</option>
+            <option value="Tubod">Tubod</option>
+            <option value="Tuntunan">Tuntunan</option>
+            <option value="Nahawan">Nahawan</option>
+        </select>
+
+        <button type="submit" onclick="this.innerText='Loading...'">
+            🌐 Get Temperature
+        </button>
+        </form>
+
+        <!-- TABLE -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Temp ID</th>
+                    <th>Temperature</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Barangay</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% if temperatures %}
+                    {% for t in temperatures %}
+                    <tr>
+                        <td>T{{ "%03d"|format(t.id) }}</td>
+                        <td><strong>{{ t.value }}°C</strong></td>
+                        <td>{{ t.date }}</td>
+                        <td>{{ t.time }}</td>
+                        <td>{{ t.barangay }}</td> 
+                        <td>
+                            <!-- VIEW -->
+                            <a href="{{ url_for('view_temperature', id=t.id) }}">
+                                <button class="view">👁 View Details</button>
+                            </a>
+
+                            <!-- DELETE -->
+                            <button class="delete"
+                            onclick="openDeleteModal('{{ t.id }}', 'T{{ "%03d"|format(t.id) }}', 'temperature')">
+                            🗑 Delete
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="no-data">
+                            No temperature records found
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+
+        <h3>⚠️ Confirm Delete</h3>
+
+        <p id="deleteMessage">
+            Are you sure you want to delete this record?
+        </p>
+
+        <p class="warning-text">
+            This action cannot be undone.
+        </p>
+
+        <form id="deleteForm" method="POST">
+            <button type="submit" class="btn-danger">Yes, Delete</button>
+            <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        </form>
+
+    </div>
+</div>
+
+<script>
+
+function openDeleteModal(id, name, type) {
+    const form = document.getElementById("deleteForm");
+    const message = document.getElementById("deleteMessage");
+
+    if (type === "temperature") {
+        form.action = "/delete_temperature/" + id;
+        message.innerHTML = `Are you sure you want to delete Temperature ID <strong>${name}</strong>?`;
+    }
+
+    if (type === "illness") {
+        form.action = "/delete_case/" + id;
+        message.innerHTML = `Are you sure you want to delete case of <strong>${name}</strong>?`;
+    }
+
+    document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
+}
+
+// click outside
+window.onclick = function(event) {
+    const modal = document.getElementById("deleteModal");
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+function filterBarangay() {
+    let selected = document.getElementById("barangayFilter").value.toLowerCase();
+    let rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+        let barangayCell = row.cells[4];
+
+        if (!barangayCell) return;
+
+        let barangay = barangayCell.innerText.toLowerCase().trim();
+
+        if (selected === "" || barangay === selected) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+
+function refreshData() {
+    location.reload();
+}
+
+
+// AUTO REFRESH EVERY 60 SECONDS
+//setInterval(refreshData, 60000);
+</script>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

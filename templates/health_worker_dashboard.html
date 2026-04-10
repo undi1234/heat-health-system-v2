@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOP NAVBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN CONTENT -->
+<div class="main">
+
+    <h1>Dashboard</h1>
+    <p class="subtitle">Health Worker View</p>
+
+    <!-- TOP CARDS -->
+    <div class="card-row">
+        <div class="card">
+            <h3>Total Cases</h3>
+            <p class="number">{{ total_cases }}</p>
+        </div>
+
+        <div class="card">
+            <h3>Critical Alerts</h3>
+            <p class="number red">{{ critical_alerts }}</p>
+        </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+
+        <div class="action-card">
+            <h3>View Reports 📄</h3>
+            <p>Generate and view health reports</p>
+            <a href="{{ url_for('reports') }}">
+                <button class="btn dark">View Reports</button>
+            </a>
+        </div>
+
+        <div class="action-card">
+            <h3>Monitor Illness Cases 📋</h3>
+            <p>View and manage illness records</p>
+            <a href="{{ url_for('illness_records') }}">
+                <button class="btn">Monitor Illness Cases</button>
+            </a>
+        </div>
+
+        <div class="action-card">
+            <h3>Manage Residents 👥</h3>
+            <p>View and update resident info</p>
+            <a href="{{ url_for('residents_management') }}">
+                <button class="btn">Manage Residents</button>
+            </a>
+        </div>
+
+        <div class="action-card">
+            <h3>Update Case Status 🔄</h3>
+            <p>Modify and update illness case status</p>
+            <a href="{{ url_for('illness_records') }}">
+                <button class="btn">Update Case Status</button>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

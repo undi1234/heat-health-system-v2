@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Case</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<div class="main">
+
+    <h1>Update Case Status</h1>
+
+    <div class="container">
+
+        <form method="POST">
+
+            <p><strong>Resident:</strong> {{ case.resident_name }}</p>
+            <p><strong>Symptoms:</strong> {{ case.symptoms }}</p>
+            <p><strong>Date:</strong> {{ case.date }}</p>
+
+            <label>Status:</label>
+            <select name="status" required>
+                <option value="Reported" {% if case.status == "Reported" %}selected{% endif %}>Reported</option>
+                <option value="Under Treatment" {% if case.status == "Under Treatment" %}selected{% endif %}>Under Treatment</option>
+                <option value="Recovered" {% if case.status == "Recovered" %}selected{% endif %}>Recovered</option>
+            </select>
+
+            <br><br>
+
+            <button type="submit" class="btn dark">Update</button>
+
+            <a href="{{ url_for('illness_records') }}">
+                <button type="button" class="btn">Cancel</button>
+            </a>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registered Users</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOP NAVBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+<!-- 📊 MAIN CONTENT -->
+<div class="main">
+
+    <h1>Registered Accounts</h1>
+    <p class="subtitle">View and manage all registered users</p>
+
+    
+    <div class="table-container">
+
+        <!-- 🔍 SEARCH -->
+        <input type="text" id="searchInput" class="search" placeholder="Search user...">
+
+        <!-- 🔥 SEARCH SCRIPT -->
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("searchInput");
+            const noDataMessage = document.getElementById("noDataMessage");
+
+            searchInput.addEventListener("keyup", function () {
+                const filter = this.value.toLowerCase();
+                const rows = document.querySelectorAll("#dataTable tbody tr"); // ✅ moved inside
+
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+
+                    if (text.includes(filter)) {
+                        row.style.display = "";
+                        visibleCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // ✅ FIX: also check if table is empty
+                if (visibleCount === 0) {
+                    noDataMessage.style.display = "block";
+                } else {
+                    noDataMessage.style.display = "none";
+                }
+            });
+        });
+        </script>
+
+        <!-- 📊 TABLE -->
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.fullname }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <button 
+                            onclick="openDeleteModal({{ user.id }}, '{{ user.fullname }}')" 
+                            class="delete">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table> 
+
+        <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
+            No users found
+        </p>    
+        
+
+    </div>
+
+</div>    
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+
+        <h3>⚠️ Confirm Delete</h3>
+
+        <p id="deleteMessage">
+            Are you sure you want to delete this user?
+        </p>
+
+        <p class="warning-text">
+            This action cannot be undone.
+        </p>
+
+        <form id="deleteForm" method="POST">
+            <button type="submit" class="btn-danger">Yes, Delete</button>
+            <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        </form>
+
+    </div>
+</div>
+
+{% include 'logout_modal.html' %}
+
+<script>
+function openDeleteModal(userId, fullname) {
+    const form = document.getElementById("deleteForm");
+    const message = document.getElementById("deleteMessage");
+
+    form.action = "/delete_user/" + userId;
+
+    // ✅ Show name
+    message.innerHTML = `Are you sure you want to delete <strong>${fullname}</strong>?`;
+
+    document.getElementById("deleteModal").style.display = "flex";
+}
+
+function closeModal() {
+    document.getElementById("deleteModal").style.display = "none";
+}
+
+// Close when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById("deleteModal");
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+</body>
+</html>

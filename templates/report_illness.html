@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Heat Illness</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+</head>
+
+<body>
+
+<!-- 🔴 TOPBAR -->
+<div class="topbar">
+    <div class="left">
+        <span class="logo">🌡️</span>
+        <div>
+            <h2>HEAT HEALTH MONITORING SYSTEM</h2>
+            <p>Barangay Temperature Monitoring</p>
+        </div>
+    </div>
+
+    <div class="right">
+        <div class="user">
+            <strong>{{ username }}</strong>
+            <small>{{ role }}</small>
+        </div>
+        
+        <button class="logout" onclick="openLogoutModal()">Logout</button>
+    </div>
+</div>
+
+<!-- 🧭 SIDEBAR -->
+{% include 'sidebar.html' %}
+
+
+<!-- 📊 MAIN -->
+<div class="main">
+
+    <div class="page-header">
+        <h1>Report Heat Illness</h1>
+        <p class="subtitle">Submit a heat-related illness report</p>
+    </div>
+
+    <div class="form-container">
+
+        <h3>📋 Illness Report Form</h3>
+        <form method="POST" action="{{ url_for('report_illness') }}">
+
+            <!-- NAME -->
+            <label>Name</label>
+            <input type="text" value="{{ fullname }}" readonly>
+
+            <!-- SYMPTOMS -->
+            <label>Symptoms</label>
+            <p class="subtitle">Describe your symptoms (e.g., Dizziness, Headache, etc.)</p>
+            <textarea name="symptoms" required></textarea>
+
+            <!-- DATE -->
+            <label>Date</label>
+            <input type="date" name="date" required>
+
+            <!-- INFO BOX -->
+            <div class="info-box">
+                <h4>Important Information:</h4>
+                <ul>
+                    <li>A health worker will review your report</li>
+                    <li>You will be contacted for follow-up if needed</li>
+                    <li>For emergencies, please call emergency services immediately</li>
+                </ul>
+            </div>
+
+            <!-- ✅ BUTTON NOW BELOW -->
+            <button type="submit" class="submit-btn">Submit Report</button>
+
+        </form>
+
+    </div>
+    
+</div>
+
+{% include 'logout_modal.html' %}
+
+</body>
+</html>

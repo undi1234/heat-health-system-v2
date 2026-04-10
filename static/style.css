@@ -1,0 +1,204 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* BODY */
+body {
+    min-height: 100vh; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f4f7f6;
+    padding: 20px;
+}
+
+/* FRAME (MAIN CONTAINER) */
+.frame {
+    width: 400px;
+    padding: 35px;
+    background: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* ICON */
+.icon {
+    font-size: 40px;
+    background: red;
+    color: white;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 15px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon span {
+    font-size: 40px;
+}
+
+/* TITLE */
+h2 {
+    margin-bottom: 10px;
+    font-size: 20px; 
+    line-height: 1.3;
+}
+
+.subtitle {
+    color: gray;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* INPUT FIELD */
+.input-field {
+    text-align: left;
+    margin-bottom: 15px; 
+}
+
+.input-field label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+/* INPUT + SELECT */
+.input-field input,
+.input-field select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #eee;
+    font-size: 14px;
+    outline: none;
+}
+
+/* SELECT DROPDOWN */
+.input-field input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+/* BUTTON */
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #e60000;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #cc0000;
+}
+
+/* REGISTER */
+.register-box {
+    margin-top: 15px;
+    color: #555;
+    cursor: pointer;
+}
+
+.register-box:hover {
+    text-decoration: underline;
+}
+
+/* BACK TO LOGIN BUTTON CONTAINER */
+.back-login {
+    margin-top: 10px;
+}
+
+/* SECONDARY BUTTON STYLE */
+.btn.secondary {
+    background: #ccc;
+    color: #333;
+}
+
+.btn.secondary:hover {
+    background: #999;
+}
+
+.btn {
+    margin-top: 10px;
+}
+
+/* PLACEHOLDER */
+::placeholder {
+    color: #888;
+}
+
+/* 🔥 EXTRA FIX FOR SMALL SCREENS */
+@media (max-height: 600px) {
+    body {
+        align-items: flex-start; /* prevent cut */
+    }
+}
+
+/* FLASH CONTAINER */
+#flash-container {
+    margin-bottom: 15px;
+}
+
+/* FLASH BASE */
+.flash {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+
+    font-size: 14px;
+    animation: fadeIn 0.3s ease;
+}
+
+/* SUCCESS */
+.flash.success {
+    background: #e6f9f0;
+    color: #0f9d58;
+    border-left: 5px solid #0f9d58;
+}
+
+/* ERROR */
+.flash.error,
+.flash.fullname_error {
+    background: #ffe6e6;
+    color: #d93025;
+    border-left: 5px solid #d93025;
+}
+
+/* CLOSE BUTTON */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: inherit;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
