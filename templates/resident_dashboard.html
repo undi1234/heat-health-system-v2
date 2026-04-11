@@ -83,7 +83,7 @@
         <div class="action-card">
             <h3>View Safety Alerts ⚠️</h3>
             <p>Check current heat warnings and safety guidelines</p>
-            <a href="{{ url_for('safety_alerts') }}">
+            <a href="{{ url_for('resident.safety_alerts') }}">
                 <button class="btn dark">View Safety Alerts</button>
             </a>
         </div>
@@ -91,7 +91,7 @@
         <div class="action-card">
             <h3>Report Illness Case 📝</h3>
             <p>Submit a heat-related illness report</p>
-            <a href="{{ url_for('report_illness') }}">
+            <a href="{{ url_for('resident.report_illness') }}">
                 <button class="btn">Report Illness Case</button>
             </a>
         </div>
@@ -99,7 +99,7 @@
         <div class="action-card">
             <h3>Check My Case Status 📋</h3>
             <p>View the status of your illness reports</p>
-            <a href="{{ url_for('case_status') }}">
+            <a href="{{ url_for('resident.case_status') }}">
                 <button class="btn">Check My Case Status</button>
             </a>
         </div>

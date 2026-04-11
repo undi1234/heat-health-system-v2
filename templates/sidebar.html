@@ -3,23 +3,23 @@
 
     {% if role == "HealthWorker" %}
         <!-- 👨‍⚕️ HEALTH WORKER SIDEBAR -->
-        <a href="{{ url_for('health_worker_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
-        <a href="{{ url_for('residents_management') }}" class="sidebar-link">👥 Residents Management</a>
-        <a href="{{ url_for('health_workers') }}" class="sidebar-link">🧑‍⚕️ Health Workers</a>
+        <a href="{{ url_for('healthworker.health_worker_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
+        <a href="{{ url_for('healthworker.residents_management') }}" class="sidebar-link">👥 Residents Management</a>
+        <a href="{{ url_for('healthworker.health_workers') }}" class="sidebar-link">🧑‍⚕️ Health Workers</a>
         <a href="{{ url_for('temperature_records') }}" class="sidebar-link">🌡️ Temperature Records</a>
         <a href="{{ url_for('heat_index_records') }}" class="sidebar-link">📈 Heat Index Records</a>
-        <a href="{{ url_for('illness_records') }}" class="sidebar-link">📋 Illness Records</a>
+        <a href="{{ url_for('healthworker.illness_records') }}" class="sidebar-link">📋 Illness Records</a>
         <a href="{{ url_for('reports') }}" class="sidebar-link">📄 Reports</a>
-        <a href="{{ url_for('users') }}" class="sidebar-link">👤 Users</a>
+        <a href="{{ url_for('healthworker.users') }}" class="sidebar-link">👤 Users</a>
         <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
 
-    {% elif role == "Resident" %}
         <!-- 🧑 RESIDENT SIDEBAR -->
-        <a href="{{ url_for('resident_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
-        <a href="{{ url_for('safety_alerts') }}" class="sidebar-link">⚠️ View Safety Alerts</a>
-        <a href="{{ url_for('report_illness') }}" class="sidebar-link">📋 Report Illness Case</a>
-        <a href="{{ url_for('case_status') }}" class="sidebar-link">📄 Check My Case Status</a>
-        <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
-    {% endif %}
+        {% elif role == "Resident" %}
+            <a href="{{ url_for('resident.resident_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
+            <a href="{{ url_for('resident.safety_alerts') }}" class="sidebar-link">⚠️ View Safety Alerts</a>
+            <a href="{{ url_for('resident.report_illness') }}" class="sidebar-link">📋 Report Illness Case</a>
+            <a href="{{ url_for('resident.case_status') }}" class="sidebar-link">📄 Check My Case Status</a>
+            <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
+        {% endif %}
 
 </div>
