@@ -78,7 +78,26 @@
                 <!-- POSITION -->
                 <div class="form-group">
                     <label>Position</label>
-                    <input type="text" name="position" value="{{ profile.position }}">
+                    <select name="position" required>
+
+                        <option value="">Select Position</option>
+
+                        <option value="Nurse"
+                            {% if profile.position == 'Nurse' %}selected{% endif %}>
+                            Nurse
+                        </option>
+
+                        <option value="Midwife"
+                            {% if profile.position == 'Midwife' %}selected{% endif %}>
+                            Midwife
+                        </option>
+
+                        <option value="Barangay Health Worker"
+                            {% if profile.position == 'Barangay Health Worker' %}selected{% endif %}>
+                            Barangay Health Worker
+                        </option>
+
+                    </select>
                 </div>
 
                 <!-- CONTACT -->

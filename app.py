@@ -305,7 +305,7 @@ def account():
         if not profile:
             profile = HealthWorker(
                 name=user.fullname,
-                position="N/A",
+                position="",
                 contact="N/A",
                 user_id=user.id
             )
@@ -325,7 +325,15 @@ def account():
             profile.address = request.form['address']
             profile.contact = request.form['contact']
         else:
-            profile.position = request.form['position']
+            valid_positions = ["Nurse", "Midwife", "Barangay Health Worker"]
+
+            position = request.form.get('position')
+
+            if position not in valid_positions:
+                flash("Invalid position selected!", "error")
+                return redirect(url_for('account'))
+
+            profile.position = position
             profile.contact = request.form['contact']
 
         db.session.commit()
@@ -499,6 +507,15 @@ def get_safety_reminders(level):
             {"en": "Check body for early signs of heat stress", "bi": "Bantayi ang lawas kung naay early signs sa heat stress"}
         ]
 
+    elif level == "EXTREME CAUTION":
+        return [
+            {"en": "Reduce outdoor activities, especially during midday", "bi": "Likayi ang gawas nga aktibidad labi na sa udto"},            
+            {"en": "Drink water frequently to stay hydrated", "bi": "Sige'g inom tubig aron dili ma-dehydrate"},            
+            {"en": "Wear lightweight, light-colored clothing", "bi": "Magsul-ob og gaan ug hayag nga kolor nga sinina"},           
+            {"en": "Use umbrella or hat when outdoors", "bi": "Paggamit og payong o kalo kung mogawas"},           
+            {"en": "Watch for signs of heat exhaustion (dizziness, heavy sweating)", "bi": "Bantayi ang sintomas sa heat exhaustion (kahilo, grabe nga pagpangsingot)"}
+        ]
+        
     elif level == "DANGER":
         return [
             {"en": "Limit outdoor activities as much as possible", "bi": "Limitahi ang gawas nga aktibidad kutob sa mahimo"},

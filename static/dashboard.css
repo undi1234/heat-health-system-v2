@@ -114,6 +114,32 @@ body {
     background: #ddd;
 }
 
+.sidebar {
+    width: 260px;
+    background: #f2f2f2;
+    height: 100vh;
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar-link {
+    text-decoration: none;
+    color: #333;
+    padding: 12px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.sidebar-link:hover {
+    background: #ddd;
+}
+
 /* ================= MAIN ================= */
 .main {
     margin-top: 80px;
@@ -219,77 +245,34 @@ h1 {
     margin-top: 10px;
 }
 
-.number {
-    font-size: 28px;
-}
-
-.red { color: red; }
-.green { color: green; }
-.orange { color: orange; }
-
-
-/* ================= HEAT INDEX STANDARD COLORS ================= */
-
-/* TEXT COLORS (optional for numbers) */
-.level-normal { color: #2ecc71; }
-.level-caution { color: #f1c40f; }
-.level-extreme-caution { color: #e67e22; }
-.level-danger { color: #e74c3c; }
-.level-extreme-danger { color: #8e0000; }
-
-/* BADGE STYLE */
-.level-normal-bg,
-.level-caution-bg,
-.level-extreme-caution-bg,
-.level-danger-bg,
-.level-extreme-danger-bg {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: bold;
-    display: inline-block;
-}
-
-/* BACKGROUND COLORS */
-.level-normal-bg {
-    background: #eafaf1;
-    color: #27ae60;
-}
-
-.level-caution-bg {
-    background: #fef9e7;
-    color: #b7950b;
-}
-
-.level-extreme-caution-bg {
-    background: #fdf2e9;
-    color: #d35400;
-}
-
-.level-danger-bg {
-    background: #fdecea;
-    color: #c0392b;
-}
-
-.level-extreme-danger-bg {
-    background: #f5e6e6;
-    color: #8e0000;
-}
-
 /* ================= BUTTONS ================= */
-.buttons {
-    margin-top: 20px;
-}
 
-
+/* ================= BUTTON BASE ================= */
 .btn {
-    padding: 12px;
+    padding: 12px 22px;        /* merged (uses wider padding) */
     border: none;
     border-radius: 10px;
     cursor: pointer;
-    background: #e0e0e0;
+
+    background: #e0e0e0;       /* from old version */
+    color: #333;
+
+    font-size: 14px;           /* from new version */
     font-weight: 600;
+
+    margin-top: 15px;          /* keep for spacing */
+    text-decoration: none;
+    display: inline-block;
+
+    transition: 0.2s ease;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;   /* center horizontally */
+    gap: 15px;                 /* spacing between buttons */
     margin-top: 15px;
+    flex-wrap: wrap;           /* responsive (mobile safe) */
 }
 
 .btn.dark {
@@ -306,26 +289,6 @@ h1 {
 
 .filter-btn:hover {
     background: #b80000;
-}
-
-.buttons {
-    display: flex;
-    justify-content: center;   /* center horizontally */
-    gap: 15px;                 /* spacing between buttons */
-    margin-top: 15px;
-    flex-wrap: wrap;           /* responsive (mobile safe) */
-}
-
-.btn {
-    padding: 12px 22px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    display: inline-block;
-    transition: 0.2s ease;
 }
 
 /* 🔵 ORIGINAL DARK STYLE */
@@ -399,33 +362,6 @@ h1 {
 /* Click effect */
 .auto-btn:active {
     transform: scale(0.95);
-}
-
-/* ================= SIDEBAR ================= */
-.sidebar {
-    width: 260px;
-    background: #f2f2f2;
-    height: 100vh;
-    padding: 20px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.sidebar-link {
-    text-decoration: none;
-    color: #333;
-    padding: 12px 15px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    transition: 0.2s;
-}
-
-.sidebar-link:hover {
-    background: #ddd;
 }
 
 /* ================= MODAL BACKGROUND ================= */
@@ -899,6 +835,59 @@ tbody tr {
     margin-left: 10px;
 }
 
+.red { color: red; }
+.green { color: green; }
+.orange { color: orange; }
+
+
+/* ================= HEAT INDEX STANDARD COLORS ================= */
+
+/* TEXT COLORS (optional for numbers) */
+.level-normal { color: #2ecc71; }
+.level-caution { color: #f1c40f; }
+.level-extreme-caution { color: #e67e22; }
+.level-danger { color: #e74c3c; }
+.level-extreme-danger { color: #8e0000; }
+
+/* BADGE STYLE */
+.level-normal-bg,
+.level-caution-bg,
+.level-extreme-caution-bg,
+.level-danger-bg,
+.level-extreme-danger-bg {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* BACKGROUND COLORS */
+.level-normal-bg {
+    background: #eafaf1;
+    color: #27ae60;
+}
+
+.level-caution-bg {
+    background: #fef9e7;
+    color: #b7950b;
+}
+
+.level-extreme-caution-bg {
+    background: #fdf2e9;
+    color: #d35400;
+}
+
+.level-danger-bg {
+    background: #fdecea;
+    color: #c0392b;
+}
+
+.level-extreme-danger-bg {
+    background: #f5e6e6;
+    color: #8e0000;
+}
+
 /* ================= STATUS BADGES ================= */
 .danger,
 .warning,
@@ -911,35 +900,6 @@ tbody tr {
     font-weight: 500;
 }
 
-.safe {
-    background: #d4edda;
-    color: green;
-    padding: 5px 10px;
-    border-radius: 10px;
-}
-
-.danger {
-    background: #f8d7da;
-    color: red;
-    padding: 6px 12px;
-    border-radius: 15px;
-    font-weight: bold;
-}
-
-.warning {
-    background: #fff3cd;
-    color: #856404;
-    padding: 6px 12px;
-    border-radius: 15px;
-}
-
-.caution {
-    background: #ffe5b4;
-    color: #a65b00;
-    padding: 6px 12px;
-    border-radius: 15px;
-}
-
 .recovered {
     background: #d4edda;
     color: green;
@@ -948,8 +908,8 @@ tbody tr {
 }
 
 .treatment {
-    background: #ffe5b4;
-    color: #a65b00;
+    background: #ffe0b3;
+    color: #8a4c00;
     padding: 6px 12px;
     border-radius: 15px;
 }
@@ -1057,6 +1017,8 @@ tbody tr {
 
 /* ================= AUTO CONTROLS ================= */
 .controls {
+    display: flex;
+    gap: 10px;
     margin-top: 10px;
 }
 

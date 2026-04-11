@@ -80,12 +80,12 @@
                 <div class="item">
                     <span>{{ heat.date }} - {{ heat.temperature }}°C</span>
 
-                    <span class="
-                            {% if heat.status == 'Extreme Danger' %}danger
-                            {% elif heat.status == 'Danger' %}danger
-                            {% elif heat.status == 'Extreme Caution' %}warning
-                            {% elif heat.status == 'Caution' %}warning
-                            {% else %}safe
+                        <span class="
+                            {% if heat.status == 'Extreme Danger' %}level-extreme-danger-bg
+                            {% elif heat.status == 'Danger' %}level-danger-bg
+                            {% elif heat.status == 'Extreme Caution' %}level-extreme-caution-bg
+                            {% elif heat.status == 'Caution' %}level-caution-bg
+                            {% else %}level-normal-bg
                             {% endif %}
                         ">
                         {{ heat.status }}

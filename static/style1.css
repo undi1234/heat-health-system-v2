@@ -688,7 +688,7 @@ textarea {
 
 .status-badge.resolved {
     background: #d4edda;
-    color: #155724;
+    color: green;
 }
 
 .status-badge.pending {
@@ -698,7 +698,7 @@ textarea {
 
 .treatment {
     background: #ffe0b3;
-    color: #cc6600;
+    color: #a65b00;
 }
 
 .note-box {
