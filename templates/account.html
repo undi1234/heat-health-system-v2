@@ -11,6 +11,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -36,7 +39,7 @@
     <h1>Account Information</h1>
     <p class="subtitle">Manage your personal details</p>
 
-    <div class="container">
+    <div class="container password-section">
         <form method="POST">
 
             <div class="form-grid">
@@ -110,7 +113,7 @@
 
             </div>
 
-            <div class="button-group">
+            <div class="button-group full">
                 <button type="submit" class="submit-btn">Update Profile</button>
             </div>
             
@@ -151,6 +154,12 @@
 </div>
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
 
 </body>
 </html>

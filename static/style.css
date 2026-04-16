@@ -204,6 +204,32 @@ h2 {
     cursor: pointer;
 }
 
+/* PASSWORD FIELD */
+.password-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-box input {
+    width: 100%;
+    padding-right: 40px;
+}
+
+/* EYE ICON */
+.eye-icon {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+}
+
+.eye-icon:hover {
+    opacity: 1;
+}
+
 @keyframes fadeSlide {
     0% {
         opacity: 0;
@@ -223,4 +249,102 @@ h2 {
     body {
         align-items: flex-start;
     }
+}
+
+/* ================= MOBILE FIX (IMPORTANT) ================= */
+@media (max-width: 768px) {
+
+    /* BODY */
+    body {
+        flex-direction: column;
+    }
+
+    /* TOPBAR */
+    .topbar {
+        padding: 12px 15px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .topbar h2 {
+        font-size: 16px;
+    }
+
+    .topbar p {
+        font-size: 12px;
+    }
+
+    .right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* SIDEBAR → TURN INTO TOP MENU */
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        top: 0;
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .sidebar ul {
+        display: flex;
+        gap: 10px;
+    }
+
+    .sidebar li {
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    /* MAIN CONTENT */
+    .main {
+        margin: 0;
+        margin-top: 140px; /* space for topbar */
+        padding: 15px;
+    }
+
+    /* CARDS */
+    .cards {
+        grid-template-columns: 1fr !important;
+    }
+
+    .card-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ACTIONS */
+    .actions {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* TABLE → SCROLL */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* FORM */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .submit-btn {
+        min-width: 100%;
+    }
+
+    /* MODAL */
+    .modal-content {
+        width: 90%;
+    }
+    
 }

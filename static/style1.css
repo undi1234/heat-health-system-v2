@@ -215,6 +215,8 @@ h1 {
 }
 
 /* ================== DASHBOARD ================== */
+
+
 .cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -421,18 +423,6 @@ h1 {
     margin-top: 15px;
 }
 
-@media (max-width: 900px) {
-    .cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .cards {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* BADGE STYLE */
 .warning-badge {
     display: inline-block;
@@ -501,6 +491,7 @@ h1 {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
     width: 100%;
+    margin-top: 20px
 }
 
 .action-card {
@@ -532,18 +523,6 @@ h1 {
 
 .action-card a {
     width: 100%;
-}
-
-@media (max-width: 1024px) {
-    .actions {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .actions {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* ================== BUTTONS ================== */
@@ -686,7 +665,7 @@ textarea {
     color: #856404;
 }
 
-.status-badge.resolved {
+.status-badge.recovered {
     background: #d4edda;
     color: green;
 }
@@ -867,4 +846,306 @@ tbody tr {
     color: #cc0000;
     border-radius: 8px;
     font-weight: bold;
+}
+
+/* ================= MOBILE PERFECT FIX ================= */
+@media (max-width: 768px) {
+    * {
+        max-width: 100%;
+    }
+
+    body {
+        flex-direction: column;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 700px;
+    }
+
+    th, td {
+        white-space: nowrap;
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    .page-header {
+        margin-bottom: 15px;
+    }
+
+    h1 {
+        font-size: 22px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    /* ===== TOPBAR CLEAN FIX ===== */
+    .topbar {
+        flex-direction: row;              /* 🔥 FIX: keep horizontal */
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+    }
+
+    .topbar .left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    /* 🔥 TITLE BLOCK */
+    .topbar .left div {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.5;
+    }
+
+    .topbar h2 {
+        font-size: 12px;  
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; 
+    }
+
+    .topbar p {
+        font-size: 10px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    /* 🔥 RIGHT SIDE FIX */
+    .right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .right .user {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;  /* align right */
+        font-size: 10px;
+        line-height: 1.1;
+    }
+    .right strong {
+        font-size: 12px;
+    }
+
+    .right small {
+        font-size: 10px;
+    }
+
+    .logout {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    /* ===== SIDEBAR (SLIDE MENU) ===== */
+    .sidebar {
+        position: fixed;
+        top: 60px;
+        left: -260px;
+        width: 235px;
+        height: 100%;
+        background: #f2f2f2;
+        padding: 15px;
+        flex-direction: column;
+        transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+        z-index: 999;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    /* ===== MAIN FIX (IMPORTANT) ===== */
+    .main {
+        margin: 0;
+        margin-top:60px; /* 🔥 prevents overlap with topbar */
+        padding: 15px;
+        padding-bottom: 20px;
+    }
+
+    /* ===== CARDS FIX ===== */
+    .cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    .card, .action-card, .container {
+        box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+
+    .big {
+        font-size: 24px;
+    }
+
+    /* ===== ACTIONS FIX ===== */
+    .actions {
+        grid-template-columns: 1fr;
+    }
+
+    .actions {
+        display: flex;          
+        flex-direction: column; 
+        gap: 15px;
+    }
+
+    /* ===== ALERT / STATS FIX ===== */
+    .alert-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .stats {
+        flex-direction: column;
+    }
+
+    .stat {
+        min-width: 100%;
+    }
+
+    /* ===== TABLE FIX (SCROLL) ===== */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* ===== FORM FIX ===== */
+    .form-container {
+        padding: 20px;
+    }
+
+    .submit-btn {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    /* ===== MODAL FIX ===== */
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr; /* 🔥 STACK EVERYTHING */
+    }
+
+    .button-group.full {
+        grid-column: span 1;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .container {
+        background: #fff;
+        padding: 25px;
+        border-radius: 18px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .password-section {
+        margin-top: 10px;
+    }
+
+    .container {
+        animation: slideUp 0.5s ease;
+    }
+
+    .container:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .container:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .container:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .container {
+        animation: slideUp 0.5s ease forwards;
+        opacity: 0;
+    }
+
+    .submit-btn:active {
+        transform: scale(0.97);
+    }
+
+    .logout:active {
+        transform: scale(0.95);
+    }
+
+    input:focus, textarea:focus {
+        outline: none;
+        border: 1px solid #1e66ff;
+        background: #fff;
+        box-shadow: 0 0 5px rgba(30, 102, 255, 0.3);
+        transition: 0.2s;
+    }
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px); /* smaller = smoother */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    }
+
+    button, .btn {
+        min-height: 44px; /* 🔥 Apple/Android standard tap size */
+        font-size: 14px;
+    }
+
+    .btn:active {
+        transform: scale(0.96);
+        transition: 0.1s;
+    }
+
+    .reminder-item {
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    .number {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        -webkit-tap-highlight-color: transparent; /* remove blue tap flash */
+    }
+
 }

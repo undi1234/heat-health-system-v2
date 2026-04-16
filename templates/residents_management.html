@@ -31,6 +31,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -154,6 +157,7 @@
         });
         </script>
 
+        <div class="table-container">
         <!-- TABLE -->
         <table id="dataTable">
             <thead>
@@ -202,6 +206,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
 
         <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
             No residents found
@@ -241,7 +246,7 @@
 
         <div class="form-group full">
             <label>Contact Number</label>
-            <input type="text" name="contact" id="edit_contact" required>
+            <input type="text" name="contact" id="edit_contact" readonly>
         </div>
 
         <div class="button-group full">
@@ -294,6 +299,12 @@ window.onclick = function(event) {
 </script>
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
 
 </body>
 </html>

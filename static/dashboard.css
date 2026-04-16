@@ -222,19 +222,6 @@ h1 {
     align-self: flex-start; /* keeps buttons aligned */
 }
 
-@media (max-width: 1024px) {
-    .actions {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 600px) {
-    .actions {
-        grid-template-columns: 1fr;
-    }
-}
-
-
 .card.small {
     flex: 1;
 }
@@ -456,8 +443,10 @@ h1 {
 .form-group input,
 .form-group select {
     width: 100%;
-    height: 40px;
+    height: 45px; /* ✅ SAME HEIGHT */
     padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
 }
 
 /* DELETE BUTTON */
@@ -648,14 +637,14 @@ tbody tr {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
-    align-items: end; /* 🔥 Align inputs properly */
+    align-items: stretch;
 }
 
 
 .form-group {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: flex-start; 
 }
 
 .form-group.full {
@@ -1041,4 +1030,297 @@ tbody tr {
 #autoBtn.stopped {
     background: #e74c3c;
     color: white;
+}
+
+.short-title {
+    display: none;
+}
+
+/* ================= MOBILE PERFECT FIX (HEALTHWORKER) ================= */
+@media (max-width: 768px) {
+
+    * {
+        max-width: 100%;
+    }
+
+    body {
+        flex-direction: column;
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===== TOPBAR CLEAN (MATCH RESIDENT) ===== */
+    .topbar {
+        flex-direction: row;   /* ✅ keep horizontal */
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+    }
+
+    .topbar .left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .topbar .left div {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.4;
+    }
+
+    .topbar h2 {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .topbar p {
+        font-size: 10px;
+    }
+
+    .logo {
+        font-size: 16px;
+    }
+
+    .right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .right .user {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        font-size: 10px;
+        line-height: 1.1;
+    }
+
+    .right strong {
+        font-size: 12px;
+    }
+
+    .right small {
+        font-size: 10px;
+    }
+
+    .logout {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    /* ===== SIDEBAR SLIDE ===== */
+    .sidebar {
+        position: fixed;
+        top: 60px;
+        left: -260px;
+        width: 235px;
+        height: 100%;
+        background: #f2f2f2;
+        padding: 15px;
+        flex-direction: column;
+        transition: all 0.3s ease;
+        z-index: 999;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    /* ===== MAIN FIX ===== */
+    .main {
+        margin: 0;
+        margin-top: 60px;
+        padding: 15px;
+    }
+
+    /* ===== HEADINGS ===== */
+    h1 {
+        font-size: 22px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    /* ===== CARDS ===== */
+    .card-row,
+    .cards {
+        display: grid;
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .card,
+    .action-card,
+    .container {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        margin: 0;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+    }
+
+    .number {
+        font-size: 22px;
+    }
+
+    /* ===== ACTIONS ===== */
+    .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .actions button {
+        width: 100%;
+    }
+
+    /* ===== TABLE SCROLL ===== */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        min-width: 600px; 
+        border-collapse: collapse;
+    }
+
+    
+    th, td {
+        white-space: nowrap;
+        font-size: 12px;
+        padding: 10px;
+        text-align: left;
+    }
+
+    /* ===== FORM ===== */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        display: grid;
+        gap: 12px;
+    }
+
+    .form-group {
+        min-height: 75px; /* ✅ SAME HEIGHT ALL */
+    }
+
+    .submit-btn {
+        width: 100%;
+        min-width: 100%;
+    }
+
+
+    /* ===== MODAL ===== */
+    .modal-content {
+        width: 90%;
+        max-width: 350px;
+    }
+
+    /* ===== BUTTONS (TOUCH FRIENDLY) ===== */
+    button, .btn {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .btn:active {
+        transform: scale(0.96);
+    }
+
+    .logout:active {
+        transform: scale(0.95);
+    }
+
+    /* ===== INPUT FOCUS ===== */
+    input:focus, textarea:focus {
+        outline: none;
+        border: 1px solid #e60000;
+        background: #fff;
+        box-shadow: 0 0 5px rgba(230, 0, 0, 0.3);
+        transition: 0.2s;
+    }
+
+    /* ===== SMOOTH ANIMATION ===== */
+    .container {
+        animation: slideUp 0.4s ease forwards;
+        opacity: 0;
+    }
+
+    .container:nth-child(1) { animation-delay: 0.1s; }
+    .container:nth-child(2) { animation-delay: 0.2s; }
+    .container:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* 🔥 FORCE CENTER UPDATE PASSWORD BUTTON */
+    .password-section {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 🔥 PERFECT CENTER BUTTON (MOBILE) */
+    .password-section .button-group {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .password-section .button-group.full {
+        justify-content: center !important;
+    }
+
+    .password-section .submit-btn {
+        width: auto !important;     /* ❗ remove full width */
+        min-width: 200px;
+        max-width: 280px;
+        padding: 12px 20px;
+        text-align: center;
+    }
+
+    .password-section .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .password-section .form-group {
+        width: 100%;
+    }
+
+    .password-section input {
+        width: 100%;
+    }
+
+    /* 🔥 SEPARATE THE TWO SECTIONS CLEARLY */
+    .container + .container {
+        margin-top: 20px; /* space between Update Profile & Change Password */
+    }
+
+    /* 🔥 FORCE ALL INPUTS FULL WIDTH */
+    input, select, textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+
 }

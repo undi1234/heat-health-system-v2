@@ -98,7 +98,13 @@
 
             <div class="input-field">
                 <label>Contact</label>
-                <input type="text" name="resident_contact">
+                <input type="text" name="resident_contact"
+                    value="{{ form_data.resident_contact if form_data else '' }}"
+                    class="{% if contact_error and form_data and form_data.role == 'Resident' %}input-error{% endif %}">
+
+                {% if contact_error and form_data and form_data.role == 'Resident' %}
+                    <small class="error-text">{{ contact_error }}</small>
+                {% endif %}
             </div>
 
         </div>
@@ -135,7 +141,13 @@
 
             <div class="input-field">
                 <label>Contact</label>
-                <input type="text" name="worker_contact">
+                <input type="text" name="worker_contact"
+                    value="{{ form_data.worker_contact if form_data else '' }}"
+                    class="{% if contact_error and form_data and form_data.role == 'HealthWorker' %}input-error{% endif %}">
+
+                {% if contact_error and form_data and form_data.role == 'HealthWorker' %}
+                    <small class="error-text">{{ contact_error }}</small>
+                {% endif %}
             </div>
 
             <div class="input-field">
@@ -184,9 +196,16 @@ function toggleFields() {
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    toggleFields(); // ✅ keep this only
+    const role = "{{ form_data.role if form_data else '' }}";
+
+    if (role) {
+        document.getElementById("role").value = role;
+    }
+
+    toggleFields(); 
 });
 </script>
+
 
 </body>
 </html>

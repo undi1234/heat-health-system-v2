@@ -12,6 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -45,33 +48,35 @@
 
         <h3>📄 My Illness Cases</h3>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Case ID</th>
-                    <th>Symptoms</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Handled By</th>
-                </tr>
-            </thead>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Symptoms</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Handled By</th>
+                    </tr>
+                </thead>
 
-            <tbody>
-                {% for case in cases %}
-                <tr>
-                    <td>{{ case.id }}</td>
-                    <td>{{ case.symptoms }}</td>
-                    <td>
-                        <span class="status-badge {{ case.status | lower }}">
-                            {{ case.status }}
-                        </span>
-                    </td>
-                    <td>{{ case.date }}</td>
-                    <td>{{ case.healthworker.name if case.healthworker else 'Pending' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                <tbody>
+                    {% for case in cases %}
+                    <tr>
+                        <td>{{ case.id }}</td>
+                        <td>{{ case.symptoms }}</td>
+                        <td>
+                            <span class="status-badge {{ case.status | lower }}">
+                                {{ case.status }}
+                            </span>
+                        </td>
+                        <td>{{ case.date }}</td>
+                        <td>{{ case.healthworker.name if case.healthworker else 'Pending' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
     </div>
 
@@ -82,6 +87,12 @@
 
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
 
 </body>
 </html>

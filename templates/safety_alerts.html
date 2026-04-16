@@ -12,6 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -119,6 +122,12 @@
     setInterval(() => {
         location.reload();
     }, 300000);
+</script>
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
 </script>
 
 </body>

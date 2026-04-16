@@ -12,6 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -73,6 +76,7 @@
         </button>
         </form>
 
+        <div class="table-container">
         <!-- TABLE -->
         <table>
             <thead>
@@ -118,6 +122,7 @@
                 {% endif %}
             </tbody>
         </table>
+        </div>
 
     </div>
 
@@ -222,6 +227,13 @@ setInterval(refreshData, 300000);
 </script>
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
+
 
 </body>
 </html>

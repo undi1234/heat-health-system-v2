@@ -20,6 +20,12 @@ from routes.healthworker import healthworker_bp
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
 app.permanent_session_lifetime = timedelta(hours=2)
+app.permanent_session_lifetime = timedelta(minutes=30)
+
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # True if HTTPS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 
 # =========================
 # DATABASE CONFIG
@@ -38,15 +44,10 @@ app.register_blueprint(healthworker_bp)
 # =========================
 @app.context_processor
 def inject_user():
-    user = None
-
-    if 'user' in session:
-        user = User.query.filter_by(username=session['user']).first()
-
     return dict(
         username=session.get('user'),
         role=session.get('role'),
-        fullname=user.fullname if user else None   # ✅ ADD THIS
+        fullname=session.get('fullname') 
     )
 
 
@@ -97,6 +98,7 @@ def account():
             return redirect(url_for('account'))
 
         user.fullname = request.form['fullname']
+        session['fullname'] = user.fullname
 
         if user.role == "Resident":
             profile.address = request.form['address']
@@ -259,7 +261,7 @@ def update_resident(id):
     resident = Resident.query.get_or_404(id)
 
     resident.address = request.form['address']
-    resident.contact = request.form['contact']
+#    resident.contact = request.form['contact']
 
     db.session.commit()
 
@@ -277,7 +279,7 @@ def update_worker(id):
     worker = HealthWorker.query.get_or_404(id)
 
     worker.position = request.form['position']
-    worker.contact = request.form['contact']
+#    worker.contact = request.form['contact']
 
     db.session.commit()
 
@@ -961,4 +963,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

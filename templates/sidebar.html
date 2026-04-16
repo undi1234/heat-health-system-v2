@@ -1,3 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- ✅ MOBILE FIX -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ✅ LOAD CSS BASED ON ROLE -->
+    {% if role == "HealthWorker" %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    {% elif role == "Resident" %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='style1.css') }}">
+    {% endif %}
+
+</head>
+
+<body>
+
 <!-- 🧭 SIDEBAR -->
 <div class="sidebar">
 
@@ -13,13 +32,16 @@
         <a href="{{ url_for('healthworker.users') }}" class="sidebar-link">👤 Users</a>
         <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
 
+    {% elif role == "Resident" %}
         <!-- 🧑 RESIDENT SIDEBAR -->
-        {% elif role == "Resident" %}
-            <a href="{{ url_for('resident.resident_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
-            <a href="{{ url_for('resident.safety_alerts') }}" class="sidebar-link">⚠️ View Safety Alerts</a>
-            <a href="{{ url_for('resident.report_illness') }}" class="sidebar-link">📋 Report Illness Case</a>
-            <a href="{{ url_for('resident.case_status') }}" class="sidebar-link">📄 Check My Case Status</a>
-            <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
-        {% endif %}
+        <a href="{{ url_for('resident.resident_dashboard') }}" class="sidebar-link">🏠 Dashboard</a>
+        <a href="{{ url_for('resident.safety_alerts') }}" class="sidebar-link">⚠️ View Safety Alerts</a>
+        <a href="{{ url_for('resident.report_illness') }}" class="sidebar-link">📋 Report Illness Case</a>
+        <a href="{{ url_for('resident.case_status') }}" class="sidebar-link">📄 Check My Case Status</a>
+        <a href="{{ url_for('account') }}" class="sidebar-link">⚙️ Account Settings</a>
+    {% endif %}
 
 </div>
+
+</body>
+</html>

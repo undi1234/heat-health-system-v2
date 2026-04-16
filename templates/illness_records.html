@@ -12,6 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -39,7 +42,7 @@
     <h1>Heat Illness Records</h1>
     <p class="subtitle">Record and monitor heat-related illnesses</p>
 
-    <div class="container">
+    <div class="table-container">
 
         <!-- HEADER -->
         <div class="header">
@@ -129,6 +132,7 @@
         });
         </script>
 
+        <div class="table-container">
         <!-- TABLE -->
         <table id="dataTable">
             <thead>
@@ -188,6 +192,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        </div>
 
         <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
             No illness records found
@@ -310,6 +315,12 @@ function closeModal() {
 </script>
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
 
 </body>
 </html>

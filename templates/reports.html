@@ -12,6 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
+    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+        ☰
+    </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -109,13 +112,13 @@
             <div class="item">
                 <span>{{ case.resident.name if case.resident else 'Unknown' }}</span>
 
-                <span class="
-                    {% if case.status == 'Recovered' %}recovered
-                    {% elif case.status == 'Under Treatment' %}treatment
-                    {% elif case.status == 'Reported' %}reported
-                    {% else %}warning
-                    {% endif %}
-                ">
+                    <span class="
+                        {% if case.status.strip().lower() == 'recovered' %}recovered
+                        {% elif case.status.strip().lower() == 'under treatment' %}treatment
+                        {% elif case.status.strip().lower() == 'reported' %}reported
+                        {% else %}warning
+                        {% endif %}
+                    ">
                     {{ case.status }}
                 </span>
             </div>
@@ -151,6 +154,12 @@
 </div>
 
 {% include 'logout_modal.html' %}
+
+<script>
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
 
 </body>
 </html>
