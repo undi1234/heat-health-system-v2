@@ -20,6 +20,8 @@
         </p>
 
         <form id="deleteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <button type="submit" class="btn-danger">Yes, Delete</button>
             <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
         </form>
@@ -77,6 +79,7 @@
                 <p class="subtitle">Enter worker details</p>
 
                 <form action="{{ url_for('healthworker.add_health_worker') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <label>Name</label>
                     <input type="text" name="name" required>
@@ -171,6 +174,8 @@
 
                         <!-- DELETE -->
                     <form action="{{ url_for('healthworker.delete_health_worker', id=w.id) }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                         <button type="button" class="delete"
                             onclick='openDeleteModal(
                                 {{ w.id }},
@@ -202,6 +207,7 @@
         <h3>Edit Health Worker</h3>
 
         <form id="editWorkerForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <input type="hidden" name="id" id="worker_id">
 

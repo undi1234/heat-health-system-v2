@@ -65,9 +65,16 @@
 
     /* 🌡 TEMP */
     .temp {
-        font-size: 55px;
+        font-size: 40px;
         font-weight: bold;
         margin: 15px 0;
+    }
+
+    .heat-index {
+        font-size: 40px;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
 
     /* 🏷 STATUS BADGE */
@@ -177,48 +184,19 @@
         <h2>🌡️ Temperature Record</h2>
         <p class="subtitle">Barangay Monitoring Details</p>
 
-        <!-- TEMP -->
-        <div class="temp 
-            {% if record.value < 27 %}
-                level-normal
-            {% elif record.value < 32 %}
-                level-caution
-            {% elif record.value < 41 %}
-                level-extreme-caution
-            {% elif record.value < 54 %}
-                level-danger
-            {% else %}
-                level-extreme-danger
-            {% endif %}
-            ">
-            {{ record.value }}°C
+        <!-- 🌡 TEMPERATURE -->
+        <div class="temp {{ level_class }}">
+            🌡️ {{ record.value }}°C
+        </div>
+
+        <!-- 🔥 HEAT INDEX (MAIN FOCUS) -->
+        <div class="heat-index {{ level_class }}">
+            🔥 {{ heat_index|round(1) }}°C
         </div>
 
         <!-- STATUS -->
-        <div class="badge 
-            {% if record.value < 27 %}
-                level-normal-bg
-            {% elif record.value < 32 %}
-                level-caution-bg
-            {% elif record.value < 41 %}
-                level-extreme-caution-bg
-            {% elif record.value < 54 %}
-                level-danger-bg
-            {% else %}
-                level-extreme-danger-bg
-            {% endif %}
-        ">
-            {% if record.value < 27 %}
-                NORMAL
-            {% elif record.value < 32 %}
-                CAUTION
-            {% elif record.value < 41 %}
-                EXTREME CAUTION
-            {% elif record.value < 54 %}
-                DANGER
-            {% else %}
-                EXTREME DANGER
-            {% endif %}
+        <div class="badge {{ level_class }}-bg">
+            {{ level_icon }} {{ level_text }}
         </div>
 
         <!-- DETAILS -->

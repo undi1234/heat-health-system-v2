@@ -138,6 +138,8 @@
         </p>
 
         <form id="deleteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <button type="submit" class="btn-danger">Yes, Delete</button>
             <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
         </form>

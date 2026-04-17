@@ -475,15 +475,186 @@ h1 {
 }
 
 .level-danger {
-    background: #ff9800;
+    background: #dc3545;
     color: white;
 }
 
 .level-extreme {
+    background: #8b0000;
+    color: white;
+}
+
+/* ================= POPUP ALERT ================= */
+.popup-alert {
+    position: fixed;
+    top: 90px;
+    right: 20px;
+    min-width: 280px;
+    max-width: 350px;
+    padding: 12px 15px;
+    border-radius: 12px;
+    color: #fff;
+    display: none;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    animation: slideIn 0.4s ease;
+}
+
+/* Content layout */
+.popup-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Icon */
+.popup-alert .icon {
+    font-size: 30px;
+}
+
+/* Message */
+.popup-alert .message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Close button */
+.close-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: inherit; 
+    font-size: 13px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    opacity: 1;
+}
+
+/* ================== MODERN SELECT ================== */
+.select-group {
+    position: relative;
+    width: 100%;
+}
+
+.select-group select {
+    width: 100%;
+    padding: 12px 40px 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+
+    font-size: 14px;
+    cursor: pointer;
+
+    appearance: none;          /* remove default arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    transition: all 0.2s ease;
+}
+
+/* Custom dropdown arrow */
+.select-group::after {
+    content: "▼";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #666;
+    pointer-events: none;
+}
+
+/* Hover */
+.select-group select:hover {
+    background: #f1f1f1;
+}
+
+/* Focus */
+.select-group select:focus {
+    outline: none;
+    border: 1px solid #1e66ff;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(30, 102, 255, 0.2);
+}
+
+/* 🔥 SEVERITY BUTTONS */
+.severity-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+.severity-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    background: #eee;
+    transition: 0.2s;
+}
+
+/* COLORS */
+.severity-btn.mild {
+    background: #e6f7ea;
+}
+
+.severity-btn.moderate {
+    background: #fff4cc;
+}
+
+.severity-btn.severe {
+    background: #ffe6e6;
+}
+
+/* ACTIVE STATE */
+.severity-btn.active {
+    transform: scale(1.05);
+    border: 2px solid #0a0a23;
+}
+/* ================= POPUP STANDARD COLORS ================= */
+/* 🟢 SAFE */
+.popup-alert.safe {
+    background: #28a745;
+    color: white;
+}
+
+/* ⚠️ WARNING / EXTREME CAUTION */
+.popup-alert.warning {
+    background: #ff9800;
+    color: white;
+}
+
+/* 🔥 DANGER */
+.popup-alert.danger {
     background: #e60000;
     color: white;
 }
 
+/* 🚨 EXTREME DANGER */
+.popup-alert.extreme {
+    background: #8b0000;
+    color: white;
+}
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
 
 /* ================== ACTION CARD ================== */
 .actions {
@@ -596,6 +767,12 @@ input, textarea {
 textarea {
     height: 120px;
     resize: none;
+    margin-top: 10px;
+}
+
+#errorText {
+    font-size: 12px;
+    transition: 0.2s;
 }
 
 .note {
@@ -1108,44 +1285,133 @@ tbody tr {
         transition: 0.2s;
     }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px); /* smaller = smoother */
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px); /* smaller = smoother */
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        }
+
+        button, .btn {
+            min-height: 44px; /* 🔥 Apple/Android standard tap size */
+            font-size: 14px;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+            transition: 0.1s;
+        }
+
+        .reminder-item {
+            padding: 14px;
+            border-radius: 12px;
+        }
+
+        .number {
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            -webkit-tap-highlight-color: transparent; /* remove blue tap flash */
+        }
+
+        .popup-alert {
+            top: 70px;
+            right: 10px;
+            left: 10px;   /* FULL WIDTH */
+            max-width: none;
+        }
+
+    /* ================= REPORT ILLNESS MOBILE IMPROVEMENT ================= */
+
+    /* 🔥 Better spacing for form */
+    .form-container {
+        padding: 18px;
+        border-radius: 14px;
     }
 
-    button, .btn {
-        min-height: 44px; /* 🔥 Apple/Android standard tap size */
+    /* 🔥 Labels spacing fix */
+    label {
+        margin-top: 14px;
+        font-size: 13px;
+    }
+
+    /* 🔥 Inputs + textarea cleaner */
+    input, textarea, select {
         font-size: 14px;
+        padding: 12px;
+        border-radius: 10px;
     }
 
-    .btn:active {
-        transform: scale(0.96);
-        transition: 0.1s;
+    /* 🔥 TEXTAREA bigger for mobile typing */
+    textarea {
+        height: 140px;
     }
 
-    .reminder-item {
+    /* 🔥 Dropdown fix */
+    .select-group select {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    /* 🔥 Severity buttons → STACK on small phones */
+    .severity-buttons {
+        flex-direction: column;   /* 🔥 vertical */
+        gap: 8px;
+    }
+
+    /* 🔥 Bigger tap area */
+    .severity-btn {
+        width: 100%;
+        font-size: 14px;
         padding: 14px;
-        border-radius: 12px;
     }
 
-    .number {
-        width: 30px;
-        height: 30px;
+    /* 🔥 Active feedback stronger */
+    .severity-btn.active {
+        transform: scale(1.02);
+    }
+
+    /* 🔥 Suggestion + notice spacing */
+    #suggestionText,
+    #autoFillNotice {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+    }
+
+    /* 🔥 Clear button fix */
+    .btn {
+        margin-top: 10px;
         font-size: 14px;
     }
 
-    html {
-        scroll-behavior: smooth;
+    /* 🔥 Info box cleaner */
+    .info-box {
+        font-size: 13px;
+        padding: 15px;
     }
 
-    body {
-        -webkit-tap-highlight-color: transparent; /* remove blue tap flash */
+    /* 🔥 Submit button FULL WIDTH */
+    .submit-btn {
+        width: 100%;
+        min-width: 100%;
+        padding: 14px;
+        font-size: 15px;
     }
 
+    /* 🔥 Prevent elements from sticking too close */
+    .form-container > * {
+        margin-bottom: 6px;
+    }
 }

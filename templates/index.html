@@ -27,6 +27,7 @@
 
     <!-- ✅ FORM CONNECTED -->
     <form action="/login" method="POST" onsubmit="return validateLogin()">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="input-field">
             <label>Username</label>

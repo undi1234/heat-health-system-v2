@@ -21,13 +21,18 @@
 
     <!-- ✅ FORM CONNECTED -->
     <form action="/register" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="input-field">
             <label>Full Name</label>
-            <input type="text" name="fullname"
+            <input type="text" id="fullname" name="fullname"
                 value="{{ form_data.fullname if form_data else '' }}"
                 class="{% if fullname_error %}input-error{% endif %}" required>
 
+            <!-- 🔥 Live validation message -->
+            <small id="fullnameLiveError" class="error-text"></small>
+
+            <!-- Flask error (keep this) -->
             {% if fullname_error %}
                 <small class="error-text">{{ fullname_error }}</small>
             {% endif %}
@@ -35,9 +40,11 @@
 
         <div class="input-field">
             <label>Username</label>
-            <input type="text" name="username"
+            <input type="text" id="username" name="username"
                 value="{{ form_data.username if form_data else '' }}"
                 class="{% if username_error %}input-error{% endif %}" required>
+
+            <small id="usernameLiveError" class="error-text"></small>
 
             {% if username_error %}
                 <small class="error-text">{{ username_error }}</small>
@@ -102,6 +109,8 @@
                     value="{{ form_data.resident_contact if form_data else '' }}"
                     class="{% if contact_error and form_data and form_data.role == 'Resident' %}input-error{% endif %}">
 
+                <small id="residentContactError" class="error-text"></small>
+
                 {% if contact_error and form_data and form_data.role == 'Resident' %}
                     <small class="error-text">{{ contact_error }}</small>
                 {% endif %}
@@ -145,6 +154,8 @@
                     value="{{ form_data.worker_contact if form_data else '' }}"
                     class="{% if contact_error and form_data and form_data.role == 'HealthWorker' %}input-error{% endif %}">
 
+                <small id="workerContactError" class="error-text"></small>
+
                 {% if contact_error and form_data and form_data.role == 'HealthWorker' %}
                     <small class="error-text">{{ contact_error }}</small>
                 {% endif %}
@@ -170,6 +181,7 @@
     </div>
 </div>
 
+
 <script>
 function toggleFields() {
     const role = document.getElementById("role").value;
@@ -181,7 +193,7 @@ function toggleFields() {
     if (role === "Resident") {
         residentFields.style.display = "block";
         workerFields.style.display = "none";
-        address.required = true;   // ✅ only required here
+        address.required = true; 
     } else if (role === "HealthWorker") {
         residentFields.style.display = "none";
         workerFields.style.display = "block";
@@ -195,6 +207,166 @@ function toggleFields() {
 </script>
 
 <script>
+const fullnameInput = document.getElementById("fullname");
+const fullnameLiveError = document.getElementById("fullnameLiveError");
+
+// ✅ LIVE VALIDATION ONLY (NO FORMATTING HERE)
+fullnameInput.addEventListener("input", function () {
+    let value = fullnameInput.value;
+
+    const pattern = /^[A-Z][a-z]+(?: (?:[A-Z][a-z]+|[a-z]+|[A-Z]\.|[A-Z][a-z]+(?:['-][A-Z][a-z]+)?))*$/;
+
+    if (value.length === 0) {
+        fullnameLiveError.textContent = "";
+        fullnameInput.classList.remove("valid", "invalid");
+        return;
+    }
+
+    if (value.length > 50) {
+        fullnameLiveError.textContent = "Too long (max 50 characters)";
+        fullnameInput.classList.add("invalid");
+        fullnameInput.classList.remove("valid");
+        return;
+    }
+
+    if (value.split(/\s+/).length < 2) {
+        fullnameLiveError.textContent = "Enter first and last name";
+        fullnameInput.classList.add("invalid");
+        fullnameInput.classList.remove("valid");
+        return;
+    }
+
+    let words = value.toLowerCase().split(/\s+/);
+    if (new Set(words).size === 1) {
+        fullnameLiveError.textContent = "Invalid full name";
+        fullnameInput.classList.add("invalid");
+        fullnameInput.classList.remove("valid");
+        return;
+    }
+
+    if (!pattern.test(value)) {
+        fullnameLiveError.textContent = "Invalid name format";
+        fullnameInput.classList.add("invalid");
+        fullnameInput.classList.remove("valid");
+        return;
+    }
+
+    // ✅ Valid
+    fullnameLiveError.textContent = "";
+    fullnameInput.classList.add("valid");
+    fullnameInput.classList.remove("invalid");
+});
+
+
+// ✅ FORMAT ONLY WHEN USER LEAVES INPUT
+fullnameInput.addEventListener("blur", function () {
+    let value = fullnameInput.value;
+
+    value = value.replace(/\s+/g, " ").trim();
+
+    value = value.split(" ").map(word => {
+        if (/^[a-zA-Z]\.$/.test(word)) return word.toUpperCase();
+
+        if (word.includes("'") || word.includes("-")) {
+            return word.split(/['-]/).map(w =>
+                w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+            ).join(word.includes("'") ? "'" : "-");
+        }
+
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }).join(" ");
+
+    fullnameInput.value = value;
+});
+</script>
+
+<script>
+const usernameInput = document.getElementById("username");
+const usernameLiveError = document.getElementById("usernameLiveError");
+
+let timeout = null;
+
+usernameInput.addEventListener("input", function () {
+    let value = usernameInput.value;
+
+    const pattern = /^[A-Za-z][A-Za-z0-9_]{4,14}$/;
+
+    // Format validation
+    if (value.length === 0) {
+        usernameLiveError.textContent = "";
+        return;
+    }
+
+    if (!pattern.test(value)) {
+        usernameLiveError.textContent = "5–15 chars, start with letter, no spaces";
+        usernameInput.classList.add("invalid");
+        usernameInput.classList.remove("valid");
+        return;
+    }
+
+    // ⏳ Delay request (prevent spam)
+    clearTimeout(timeout);
+    timeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`/check-username?username=${value}`);
+            const data = await res.json();
+
+            if (data.exists) {
+                usernameLiveError.textContent = "Username already taken";
+                usernameInput.classList.add("invalid");
+                usernameInput.classList.remove("valid");
+            } else {
+                usernameLiveError.textContent = "✓ Available";
+                usernameInput.classList.add("valid");
+                usernameInput.classList.remove("invalid");
+            }
+        } catch {
+            usernameLiveError.textContent = "Error checking username";
+        }
+    }, 500); // debounce
+});
+</script>
+
+<script>
+function validateContact(inputId, errorId) {
+    const input = document.getElementById(inputId);
+    const error = document.getElementById(errorId);
+
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+        let value = input.value;
+
+        // Remove invalid characters
+        value = value.replace(/[^\d+]/g, "");
+        input.value = value;
+
+        const pattern = /^(09\d{9}|\+639\d{9})$/;
+
+        if (value.length === 0) {
+            error.textContent = "";
+            input.classList.remove("valid", "invalid");
+            return;
+        }
+
+        if (!pattern.test(value)) {
+            error.textContent = "Invalid PH number";
+            input.classList.add("invalid");
+            input.classList.remove("valid");
+        } else {
+            error.textContent = "";
+            input.classList.add("valid");
+            input.classList.remove("invalid");
+        }
+    });
+}
+
+// Apply to both
+validateContact("resident_contact", "residentContactError");
+validateContact("worker_contact", "workerContactError");
+</script>
+
+<script>
 document.addEventListener("DOMContentLoaded", function() {
     const role = "{{ form_data.role if form_data else '' }}";
 
@@ -204,7 +376,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     toggleFields(); 
 });
+
+document.querySelector("form").addEventListener("submit", function(e) {
+    const invalidInputs = document.querySelectorAll(".invalid");
+
+    if (invalidInputs.length > 0) {
+        e.preventDefault();
+        alert("Please fix errors before submitting.");
+    }
+});
 </script>
+
 
 
 </body>

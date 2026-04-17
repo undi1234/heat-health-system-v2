@@ -46,21 +46,82 @@
 
     <div class="form-container">
 
-        <h3>📋 Illness Report Form</h3>
+        <h3>📋 Heat-Related Illness Report</h3>
         <form method="POST" action="{{ url_for('resident.report_illness') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- NAME -->
             <label>Name</label>
             <input type="text" value="{{ fullname }}" readonly>
 
             <!-- SYMPTOMS -->
-            <label>Symptoms</label>
-            <p class="subtitle">Describe your symptoms (e.g., Dizziness, Headache, Rapid heartbeat, Excessive sweating, Muscle cramps, etc.)</p> 
-            <textarea name="symptoms" required></textarea>
+            <label>Symptoms / Clinical Description</label>
+            <p class="subtitle">
+                Select common symptoms or describe your condition
+            </p>
+
+            <!-- 🔽 Dropdown -->
+            <div class="select-group">
+                <select id="symptomDropdown" onchange="addSymptom()">
+                    <option value=""> Select symptom </option>
+
+                    <optgroup label="Mild Symptoms">
+                        <option value="Headache">Headache</option>
+                        <option value="Dizziness">Dizziness</option>
+                        <option value="Fatigue">Fatigue</option>
+                    </optgroup>
+
+                    <optgroup label="Moderate Symptoms">
+                        <option value="Muscle cramps">Muscle cramps</option>
+                        <option value="Excessive sweating">Excessive sweating</option>
+                        <option value="Nausea">Nausea</option>
+                    </optgroup>
+
+                    <optgroup label="Severe Symptoms">
+                        <option value="Confusion">Confusion</option>
+                        <option value="Rapid heartbeat">Rapid heartbeat</option>
+                        <option value="Fainting">Fainting</option>
+                    </optgroup>
+                </select>             
+            </div>
+
+            <label>Severity Level</label>
+
+            <small id="autoFillNotice" style="color:green;"></small>
+
+            <div class="severity-buttons">
+                <button type="button" class="severity-btn mild" onclick="setSeverity('Mild', this)">🟢 Mild</button>
+                <button type="button" class="severity-btn moderate" onclick="setSeverity('Moderate', this)">🟡 Moderate</button>
+                <button type="button" class="severity-btn severe" onclick="setSeverity('Severe', this)">🔴 Severe</button>
+            </div>
+
+            <input type="hidden" name="severity" id="severityInput" required>
+
+            <!-- ✍️ Textarea -->
+            <textarea 
+                name="symptoms" 
+                id="symptomsBox" 
+                required 
+                minlength="5"
+                pattern="[A-Za-z ,]+"
+                title="Only letters and commas are allowed (e.g., headache, dizziness)"
+                placeholder="Describe your symptoms clearly (e.g., headache, dizziness after long exposure to heat)...">
+            </textarea>   
+        
+            <small id="errorText" style="color:red; display:none; margin-top:5px;">
+                ⚠️ Please enter valid symptoms (e.g., headache, dizziness)
+            </small>
+
+            <!-- 🤖 Suggestion -->
+            <small id="suggestionText" style="color: gray;"></small>
+
+            <button type="button" onclick="clearSymptoms()" class="btn" style="margin-top:8px;">
+                Clear Symptoms
+            </button>
 
             <!-- DATE -->
             <label>Date</label>
-            <input type="date" name="date" required>
+            <input type="date" name="date" max="{{ today }}" required>
 
             <!-- INFO BOX -->
             <div class="info-box">
@@ -83,10 +144,198 @@
 
 {% include 'logout_modal.html' %}
 
+
 <script>
 function toggleSidebar() {
     document.querySelector('.sidebar').classList.toggle('active');
 }
+
+function clearSymptoms() {
+    document.getElementById("symptomsBox").value = "";
+    document.getElementById("suggestionText").innerText = "";
+}
+
+function validateSymptoms() {
+    const text = document.getElementById("symptomsBox").value.toLowerCase();
+    const errorBox = document.getElementById("errorText");
+
+    const validSymptoms = [
+        "headache", "dizziness", "fatigue",
+        "muscle cramps", "excessive sweating", "nausea",
+        "confusion", "rapid heartbeat", "fainting"
+    ];
+
+    let isValid = validSymptoms.some(symptom => text.includes(symptom));
+
+    if (!isValid && text.length > 3) {
+        errorBox.style.display = "block";
+    } else {
+        errorBox.style.display = "none";
+    }
+}
+
+function setSeverity(value, element) {
+    const textarea = document.getElementById("symptomsBox");
+    const notice = document.getElementById("autoFillNotice");
+
+    // set hidden input
+    document.getElementById("severityInput").value = value;
+
+    // UI active state
+    document.querySelectorAll(".severity-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+    element.classList.add("active");
+
+    // severity suggestions
+    const severitySymptoms = {
+        "Mild": ["Headache", "Dizziness", "Fatigue"],
+        "Moderate": ["Muscle cramps", "Excessive sweating", "Nausea"],
+        "Severe": ["Confusion", "Rapid heartbeat", "Fainting"]
+    };
+
+    let currentText = textarea.value.trim();
+
+    // convert existing to array
+    let currentList = currentText
+        ? currentText.split(",").map(s => s.trim().toLowerCase())
+        : [];
+
+    let added = [];
+
+    // merge without duplicates
+    severitySymptoms[value].forEach(symptom => {
+        if (!currentList.includes(symptom.toLowerCase())) {
+            currentList.push(symptom.toLowerCase());
+            added.push(symptom);
+        }
+    });
+
+    // format nicely (capitalize first letter)
+    let finalList = currentList.map(s =>
+        s.charAt(0).toUpperCase() + s.slice(1)
+    );
+
+    textarea.value = finalList.join(", ");
+
+    function clearSymptoms() {
+        document.getElementById("symptomsBox").value = "";
+        document.getElementById("suggestionText").innerText = "";
+
+        // 🔥 ADD THIS
+        updateSuggestions();
+        validateSymptoms();
+    }
+
+    // show feedback
+    if (added.length > 0) {
+        notice.innerText = "✔ Added: " + added.join(", ");
+    } else {
+        notice.innerText = "✔ All suggested symptoms already included";
+    }
+}
+</script>
+
+<script>
+function addSymptom() {
+    let dropdown = document.getElementById("symptomDropdown");
+    let textarea = document.getElementById("symptomsBox");
+
+    if (dropdown.value !== "") {
+        let current = textarea.value
+            ? textarea.value.split(",").map(s => s.trim().toLowerCase())
+            : [];
+
+        if (!current.includes(dropdown.value.toLowerCase())) {
+            current.push(dropdown.value.toLowerCase());
+        }
+
+        // format back
+        textarea.value = current.map(s =>
+            s.charAt(0).toUpperCase() + s.slice(1)
+        ).join(", ");
+
+        dropdown.value = "";
+
+        updateSuggestions(); // 🔥 FIX
+        validateSymptoms();
+    }
+}
+
+/* 🔥 SMART SUGGESTION FUNCTION */
+function updateSuggestions() {
+    const suggestions = {
+        "dizziness": "Possible heat exhaustion. Recommend hydration and rest.",
+        "headache": "May indicate dehydration or prolonged heat exposure.",
+        "rapid heartbeat": "Possible heat stress. Monitor closely.",
+        "excessive sweating": "Body is regulating heat. Ensure fluid intake.",
+        "muscle cramps": "Possible heat cramps due to electrolyte imbalance.",
+        "nausea": "Early symptom of heat exhaustion."
+    };
+
+    let textarea = document.getElementById("symptomsBox");
+    let suggestionBox = document.getElementById("suggestionText");
+
+    let text = textarea.value.toLowerCase();
+    let results = [];
+
+    for (let key in suggestions) {
+        if (text.includes(key)) {
+            results.push(suggestions[key]);
+        }
+    }
+
+    suggestionBox.innerText = results.length 
+        ? "💡 " + results.join(" | ")
+        : "";
+}
+
+/* 🔥 AUTO LISTENER */
+document.addEventListener("DOMContentLoaded", function () {
+    let textarea = document.getElementById("symptomsBox");
+
+    textarea.addEventListener("input", updateSuggestions);
+});
+
+document.getElementById("symptomsBox").addEventListener("input", function() {
+    const text = this.value.toLowerCase();
+    const errorBox = document.getElementById("errorText");
+
+    const validSymptoms = [
+        "headache", "dizziness", "fatigue",
+        "muscle cramps", "excessive sweating", "nausea",
+        "confusion", "rapid heartbeat", "fainting"
+    ];
+
+    let isValid = validSymptoms.some(symptom => text.includes(symptom));
+
+    if (!isValid && text.length > 3) {
+        errorBox.style.display = "block";
+    } else {
+        errorBox.style.display = "none";
+    }
+});
+
+document.querySelector("form").addEventListener("submit", function(e) {
+    const text = document.getElementById("symptomsBox").value.toLowerCase();
+    const errorBox = document.getElementById("errorText");
+
+    const validSymptoms = [
+        "headache", "dizziness", "fatigue",
+        "muscle cramps", "excessive sweating", "nausea",
+        "confusion", "rapid heartbeat", "fainting"
+    ];
+
+    let isValid = validSymptoms.some(symptom => text.includes(symptom));
+
+    if (!isValid) {
+        e.preventDefault();
+
+        errorBox.style.display = "block";   // 🔥 show error
+    } else {
+        errorBox.style.display = "none";    // 🔥 hide if valid
+    }
+});
 </script>
 
 </body>

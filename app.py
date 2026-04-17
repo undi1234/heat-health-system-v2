@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, jsonify, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+import time
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 import requests
 import os
+import re
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -15,17 +17,18 @@ from routes.auth import auth_bp
 from routes.resident import resident_bp
 from utils import compute_heat_index, get_heat_level
 from routes.healthworker import healthworker_bp
-
+from markupsafe import escape
+from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
-app.permanent_session_lifetime = timedelta(hours=2)
 app.permanent_session_lifetime = timedelta(minutes=30)
 
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] = False  # True if HTTPS
+app.config['SESSION_COOKIE_SECURE'] =  False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
+csrf = CSRFProtect(app)
+SESSION_TIMEOUT = 30  # minutes
 
 # =========================
 # DATABASE CONFIG
@@ -100,9 +103,38 @@ def account():
         user.fullname = request.form['fullname']
         session['fullname'] = user.fullname
 
+        # ✅ GET INPUT FIRST
+        new_contact = request.form['contact']
+
+        # ✅ REMOVE LETTERS / SYMBOLS
+        new_contact = re.sub(r"[^\d+]", "", new_contact)
+
+        # ✅ VALIDATION (PH format)
+        pattern = r"^(09\d{9}|\+639\d{9})$"
+
+        if not re.match(pattern, new_contact):
+            flash("Invalid contact number! Use 09XXXXXXXXX or +639XXXXXXXXX", "error")
+            return redirect(url_for('account'))
+
+        # ✅ DUPLICATE CHECK HERE
+        existing_resident = Resident.query.filter(
+            Resident.contact == new_contact,
+            Resident.id != getattr(profile, 'id', None)
+        ).first()
+
+        existing_worker = HealthWorker.query.filter(
+            HealthWorker.contact == new_contact,
+            HealthWorker.id != getattr(profile, 'id', None)
+        ).first()
+
+        if existing_resident or existing_worker:
+            flash("Contact number already used!", "error")
+            return redirect(url_for('account'))
+
+        # ✅ Continue update
         if user.role == "Resident":
             profile.address = request.form['address']
-            profile.contact = request.form['contact']
+            profile.contact = new_contact
         else:
             valid_positions = ["Nurse", "Midwife", "Barangay Health Worker"]
 
@@ -113,11 +145,10 @@ def account():
                 return redirect(url_for('account'))
 
             profile.position = position
-            profile.contact = request.form['contact']
+            profile.contact = new_contact
 
         db.session.commit()
         flash("Profile updated successfully!", "success")
-
         return redirect(url_for('account'))
 
     return render_template('account.html', user=user, profile=profile)
@@ -154,16 +185,16 @@ def change_password():
         flash("Current password is incorrect!", "error")
         return redirect(request.referrer or url_for('account'))
 
-    # ❌ PASSWORD LENGTH VALIDATION
-    if len(new_password) < 8:
-        flash("Password must be at least 8 characters!", "error")
-        return redirect(request.referrer or url_for('account'))
-
     # ❌ LETTER + NUMBER CHECK
-    if new_password.isdigit() or new_password.isalpha():
-        flash("Password must contain both letters and numbers!", "error")
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$'
+    if not re.match(pattern, new_password):
+        flash("Password must be 8+ characters with uppercase, lowercase, and number!", "error")
         return redirect(request.referrer or url_for('account'))
 
+    if current_password == new_password:
+        flash("New password must be different from current password!", "error")
+        return redirect(request.referrer or url_for('account'))
+    
     # ❌ MATCH CHECK
     if new_password != confirm_password:
         flash("New passwords do not match!", "error")
@@ -309,6 +340,9 @@ def api_healthworkers():
 # =========================
 @app.route('/temperature_records')
 def temperature_records():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
     data = Temperature.query.order_by(Temperature.id.desc()).all()
     current_time = datetime.now().strftime("%I:%M:%S %p")
     barangays = db.session.query(Temperature.barangay).distinct().all()
@@ -330,7 +364,7 @@ def get_online_temperature(city):
         print("❌ API KEY NOT FOUND")
         return None
 
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
     try:
         response = requests.get(url, timeout=5)
@@ -354,8 +388,25 @@ def get_online_temperature(city):
 # =========================
 @app.route('/view_temperature/<int:id>')
 def view_temperature(id):
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
     record = Temperature.query.get_or_404(id)
-    return render_template('view_temperature.html', record=record)
+
+    # 🔥 COMPUTE HEAT INDEX HERE
+    hi, status = compute_heat_index(record.value)
+
+    # 🔥 GET LEVEL (color, label, icon)
+    level_text, level_class, level_icon = get_heat_level(hi)
+
+    return render_template(
+        'view_temperature.html',
+        record=record,
+        heat_index=round(hi, 2),
+        level_text=level_text,
+        level_class=level_class,
+        level_icon=level_icon
+    )
 
 # =========================
 # API FOR TEMPERATURE
@@ -380,6 +431,7 @@ def api_temperature():
 def add_temperature():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return jsonify({"error": "Unauthorized"}), 403
+    
     city = request.form['city']
 
     # ✅ GET FROM FORM (SELECTED BARANGAY)
@@ -429,6 +481,7 @@ def add_temperature():
 # AUTO FETCH TEMPERATURE
 # =========================
 def auto_fetch_temperature():
+    
     with app.app_context():
 
         city = os.getenv("DEFAULT_CITY")
@@ -448,7 +501,7 @@ def auto_fetch_temperature():
                 value=temp_value,
                 date=current_date,
                 time=current_time,
-                barangay=brgy   # 🔥 KEY FIX
+                barangay=brgy   
             )
             db.session.add(new_temp)
             db.session.flush()
@@ -485,6 +538,9 @@ if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
 # =========================
 @app.route('/stop_auto_temp', methods=['POST'])
 def stop_auto_temp():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
     global job, auto_running
 
     if job:
@@ -502,17 +558,21 @@ def stop_auto_temp():
 # =========================
 @app.route('/start_auto_temp', methods=['POST'])
 def start_auto_temp():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
     global job, auto_running
 
     if not auto_running:
         if not scheduler.running:
             scheduler.start()
 
-        job = scheduler.add_job(
-            func=auto_fetch_temperature,
-            trigger="interval",
-            minutes=30
-        )
+        if job is None:
+            job = scheduler.add_job(
+                func=auto_fetch_temperature,
+                trigger="interval",
+                minutes=30
+            )
 
         auto_running = True
         print("▶ Auto fetch STARTED")
@@ -525,6 +585,9 @@ def start_auto_temp():
 # =========================
 @app.route('/delete_temperature/<int:id>', methods=['POST'])
 def delete_temperature(id):
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
     temp = Temperature.query.get_or_404(id)
 
     # 🔥 DELETE RELATED HEAT INDEX FIRST
@@ -539,8 +602,10 @@ def delete_temperature(id):
 # =========================
 # API FOR SENSOR
 # =========================
+@csrf.exempt
 @app.route('/api/sensor', methods=['POST'])
 def sensor_data():
+    
     API_SECRET = os.getenv("SENSOR_SECRET")
 
     if request.headers.get("X-API-KEY") != API_SECRET:
@@ -750,7 +815,9 @@ def get_heat_data(filter_type=None):
         extreme_danger=extreme_danger
     )
 
-
+# =========================
+# GENERATE DETAILED REPORTS
+# =========================
 @app.route('/report/<type>')
 def report(type):
     if 'user' not in session or session.get('role') != "HealthWorker":
@@ -940,7 +1007,7 @@ def delete_user(id):
 # REQUEST
 # =========================
 @app.before_request
-def require_login():
+def security_middleware():
     if request.endpoint is None:
         return
 
@@ -949,9 +1016,28 @@ def require_login():
         'auth.login',
         'auth.register',
         'auth.register_page',
-        'static'
+        'auth.check_username',
+        'auth.check_contact',
+        'static',
+        'sensor_data',  
+        'check_username' 
     ]
 
+    # =========================
+    # 🔒 SESSION TIMEOUT
+    # =========================
+    session.permanent = True
+
+    if 'last_activity' in session:
+        if time.time() - session['last_activity'] > SESSION_TIMEOUT * 60:
+            session.clear()
+            return redirect(url_for('auth.home'))
+
+    session['last_activity'] = time.time()
+
+    # =========================
+    # 🔐 LOGIN REQUIRED
+    # =========================
     if request.endpoint not in allowed_routes and 'user' not in session:
         return redirect(url_for('auth.home'))
         

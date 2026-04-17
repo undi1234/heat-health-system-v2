@@ -8,7 +8,18 @@
 </head>
 
 <body>
+    
+<div id="popupAlert"
+    class="popup-alert {{ alert_class }}"
+    style="{% if not alert_message %}display:none;{% endif %}">
+    
+    <div class="popup-content">
+        <span class="icon">{{ alert_icon }}</span>
+        <span class="message">{{ alert_message }}</span>
+        <button class="close-btn" onclick="closePopup()">✖</button>
+    </div>
 
+</div>
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -54,7 +65,7 @@
 
         <div class="card">
             <h3>Current Heat Index</h3>
-            <p class="big">🌡️ {{ heat_index }}°C</p>
+            <p class="big">🔥 {{ heat_index }}°C</p>
         </div>
 
         <div class="card">
@@ -122,6 +133,26 @@
 <script>
 function toggleSidebar() {
     document.querySelector('.sidebar').classList.toggle('active');
+}
+</script>
+
+<script>
+window.onload = function () {
+    const popup = document.getElementById("popupAlert");
+    const message = popup.querySelector(".message").innerText.trim();
+
+    if (message !== "") {
+        popup.style.display = "block";
+
+        // auto hide after 5 seconds
+        setTimeout(() => {
+            popup.style.display = "none";
+        }, 5000);
+    }
+};
+
+function closePopup() {
+    document.getElementById("popupAlert").style.display = "none";
 }
 </script>
 

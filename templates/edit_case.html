@@ -15,6 +15,7 @@
     <div class="container">
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <p><strong>Resident:</strong> {{ case.resident_name }}</p>
             <p><strong>Symptoms:</strong> {{ case.symptoms }}</p>

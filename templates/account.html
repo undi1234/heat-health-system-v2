@@ -41,6 +41,7 @@
 
     <div class="container password-section">
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="form-grid">
 
@@ -127,6 +128,7 @@
         <h3>🔒 Change Password</h3>
 
         <form action="/change_password" method="POST" class="form-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="form-group">
                 <label>Current Password</label>

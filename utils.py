@@ -37,3 +37,14 @@ def get_heat_level(heat_index):
     else:
         return "EXTREME DANGER", "level-extreme-danger", "🚨"
     
+def get_alert(level_text):
+    if level_text == "EXTREME CAUTION":
+        return " Extreme caution! Avoid going outside.", "warning", "⚠️"
+
+    elif level_text == "DANGER":
+        return " Danger! Stay indoors and hydrate frequently.", "danger", "🚨"
+
+    elif level_text == "EXTREME DANGER":
+        return " Extreme danger! Emergency heat conditions.", "extreme", "🔥"
+
+    return "", "", ""

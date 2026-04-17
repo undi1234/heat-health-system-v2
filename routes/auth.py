@@ -6,6 +6,7 @@ import re
 from sqlalchemy import func
 from extensions import limiter
 import time
+from flask import jsonify
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -28,6 +29,53 @@ def home():
         general_error=session.pop('general_error', None)
     )
 
+# =========================
+# CHECK USERNAME (AJAX)
+# =========================
+@auth_bp.route('/check-username')
+def check_username():
+    username = request.args.get('username')
+
+    if not username:
+        return jsonify({'exists': False})
+
+    exists = User.query.filter_by(username=username).first() is not None
+    return jsonify({'exists': exists})
+
+# =========================
+# FULLNAME FORMATTER
+# =========================
+def format_fullname(name):
+    name = re.sub(r"\s+", " ", name).strip()  # remove extra spaces
+    parts = name.split()
+    formatted = []
+
+    for word in parts:
+        # Initial (D.)
+        if re.match(r"^[A-Za-z]\.$", word):
+            formatted.append(word.upper())
+
+        elif "'" in word or "-" in word:
+            separators = ["'", "-"]
+            temp = [word]
+
+            for sep in separators:
+                new_temp = []
+                for part in temp:
+                    new_temp.extend(part.split(sep))
+                temp = new_temp
+
+            formatted_word = word
+            for part in temp:
+                formatted_word = formatted_word.replace(part, part.capitalize())
+
+            formatted.append(formatted_word)
+
+        # Normal words
+        else:
+            formatted.append(word.capitalize())
+
+    return " ".join(formatted)
 
 # =========================
 # REGISTER PAGE
@@ -45,7 +93,7 @@ def register():
     data = request.form
 
     fullname = data.get('fullname', '').strip()
-    username = data.get('username', '').strip().lower()
+    username = data.get('username', '').strip()
     password = data.get('password')
     role = data.get('role')
 
@@ -56,6 +104,49 @@ def register():
     if not fullname or not username or not password:
         return render_template('register.html', general_error="All fields are required", form_data=data)
 
+    # CLEAN INPUT
+    fullname = re.sub(r"\s+", " ", fullname).strip()
+
+    # FORMAT
+    fullname = format_fullname(fullname)
+
+    # LENGTH LIMIT
+    if len(fullname) > 50:
+        return render_template('register.html',
+            fullname_error="Full name is too long",
+            form_data=data
+        )
+
+    # MUST HAVE AT LEAST 2 WORDS
+    if len(fullname.split()) < 2:
+        return render_template('register.html',
+            fullname_error="Please enter full name (first and last name)",
+            form_data=data
+        )
+
+    if User.query.filter(func.lower(User.fullname) == fullname.lower()).first():
+        return render_template('register.html',
+            fullname_error="Name already registered",
+            form_data=data
+        )
+
+    # BLOCK REPEATED WORDS (spam)
+    words = fullname.lower().split()
+    if len(set(words)) == 1:
+        return render_template('register.html',
+            fullname_error="Invalid full name",
+            form_data=data
+        )
+
+    # VALIDATION (FINAL)
+    fullname_pattern = r"^[A-Z][a-z]+(?: (?:[A-Z][a-z]+|[a-z]+|[A-Z]\.|[A-Z][a-z]+(?:['-][A-Z][a-z]+)?))*$"
+
+    if not re.match(fullname_pattern, fullname):
+        return render_template('register.html',
+            fullname_error="Enter a valid full name (e.g., Juan Dela Cruz)",
+            form_data=data
+        )
+    
     # STRONG PASSWORD (uppercase, lowercase, number, special char)
     strong_password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$'
     if not re.match(strong_password_pattern, password):
@@ -64,26 +155,33 @@ def register():
             password_error="Password must be 8+ chars with uppercase, lowercase, and number",
             form_data=data
         )
+    
+    if len(password) > 128:
+        return render_template('register.html',
+            password_error="Password too long",
+            form_data=data
+        )
 
     # ROLE
     if not role:
         return render_template('register.html', role_error="Please select a role", form_data=data)
 
     # USERNAME VALIDATION
-    if not re.match("^[a-z][a-z0-9_]{4,14}$", username):
+    if not re.match("^[A-Za-z][A-Za-z0-9_]{4,14}$", username):
         return render_template('register.html',
             username_error="Username must start with a letter (5–15 chars)",
             form_data=data
         )
 
     # USERNAME EXISTS
-    if User.query.filter(func.lower(User.username) == username).first():
+    if User.query.filter_by(username=username).first():
         return render_template('register.html', username_error="Username already exists", form_data=data)
 
     # CONTACT VALIDATION
     ph_pattern = r"^(09\d{9}|\+639\d{9})$"
 
     contact = resident_contact if role == "Resident" else worker_contact
+    contact = re.sub(r"[^\d+]", "", contact)
 
     if not contact:
         return render_template('register.html', contact_error="Contact number is required", form_data=data)
@@ -147,7 +245,7 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 @limiter.limit("5 per minute")
 def login():
-    username = request.form.get('username', '').strip().lower()
+    username = request.form.get('username', '').strip()
     password = request.form.get('password', '').strip()
 
     # ❗ STOP EMPTY
@@ -181,7 +279,8 @@ def login():
             attempts = 0
 
     # ✅ GET USER
-    user = User.query.filter(func.lower(User.username) == username).first()
+    user = User.query.filter_by(username=username).first()
+    dummy_hash = generate_password_hash("dummy123")
 
     # ❌ USER NOT FOUND
     if not user:

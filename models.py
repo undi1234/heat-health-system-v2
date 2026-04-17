@@ -20,7 +20,7 @@ class Resident(db.Model):
     name = db.Column(db.String(100))
     gender = db.Column(db.String(10))
     address = db.Column(db.String(100))
-    contact = db.Column(db.String(20))
+    contact = db.Column(db.String(20), unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
@@ -29,7 +29,7 @@ class HealthWorker(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     position = db.Column(db.String(50))
-    contact = db.Column(db.String(20))
+    contact = db.Column(db.String(20), unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 

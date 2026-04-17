@@ -62,6 +62,8 @@
         </div>
 
         <form action="/add_temperature" method="POST" class="temp-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
         <select name="city" required>
             <option value="">Select Location</option>
             <option value="Clarin,Bohol,PH">Clarin, Bohol</option>
@@ -143,6 +145,8 @@
         </p>
 
         <form id="deleteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <button type="submit" class="btn-danger">Yes, Delete</button>
             <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
         </form>

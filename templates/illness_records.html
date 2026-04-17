@@ -60,6 +60,7 @@
                 <p class="subtitle">Record new illness case</p>
 
                 <form action="/add_case" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <label>Resident Name</label>
                     <input type="text" name="resident_name" required>
@@ -211,6 +212,7 @@
         <h3>Update Case Status</h3>
 
         <form id="editForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <input type="hidden" name="id" id="case_id">
 
@@ -260,6 +262,8 @@
         </p>
 
         <form id="deleteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <button type="submit" class="btn-danger">Yes, Delete</button>
             <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
         </form>

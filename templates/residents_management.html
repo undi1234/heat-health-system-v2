@@ -20,6 +20,8 @@
         </p>
 
         <form id="deleteForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
             <button type="submit" class="btn-danger">Yes, Delete</button>
             <button type="button" class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
         </form>
@@ -78,6 +80,7 @@
                 <p class="subtitle">Enter resident details</p>
 
             <form action="/add_resident" method="POST" class="form-grid">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="form-group">
                     <label>Name</label>
@@ -193,6 +196,8 @@
 
                         <!-- DELETE -->
                         <form action="{{ url_for('delete_resident', id=r.id) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                             <button type="button" class="delete"
                                 onclick='openDeleteModal(
                                     {{ r.id }},
@@ -226,6 +231,7 @@
         <p class="subtitle">Update resident information</p>
 
     <form id="editForm" method="POST" class="form-grid">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <input type="hidden" name="id" id="edit_id">
 

@@ -91,6 +91,21 @@ h2 {
     font-size: 13px;
 }
 
+/* LIVE VALIDATION STATES */
+.input-field input.valid {
+    border: 2px solid #0f9d58;
+    background: #f0fff4;
+}
+
+.input-field input.invalid {
+    border: 2px solid #d93025;
+    background: #fff5f5;
+}
+
+.input-field input {
+    transition: border 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
 .error-text {
     color: #d93025;
     font-size: 12px;

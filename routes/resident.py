@@ -3,7 +3,7 @@ from datetime import datetime
 
 from models import User, Resident, Temperature, HeatIndex, Illness
 from models import db
-from utils import get_heat_level
+from utils import get_heat_level, get_alert
 
 resident_bp = Blueprint('resident', __name__)
 
@@ -101,6 +101,23 @@ def resident_dashboard():
     level_text, level_class, level_icon = get_heat_level(heat_index)
     reminders = get_safety_reminders(level_text)
 
+    # 🔥 SHOW ONLY FOR DANGEROUS LEVELS + NO REPEAT
+    danger_levels = ["EXTREME CAUTION", "DANGER", "EXTREME DANGER"]
+
+    if level_text in danger_levels:
+
+        # Only show if NEW level
+        if session.get("last_alert") != level_text:
+            alert_message, alert_class, alert_icon = get_alert(level_text)
+            session["last_alert"] = level_text
+        else:
+            alert_message, alert_class, alert_icon = "", "", ""
+
+    else:
+        # Reset so next dangerous level can trigger again
+        session["last_alert"] = None
+        alert_message, alert_class, alert_icon = "", "", ""
+
     return render_template(
         'resident_dashboard.html',
         temperature=temperature,
@@ -109,9 +126,11 @@ def resident_dashboard():
         level_class=level_class,
         level_icon=level_icon,
         reminders=reminders,
-        barangay=resident.address
+        barangay=resident.address,
+        alert_message=alert_message,
+        alert_class=alert_class,
+        alert_icon=alert_icon
     )
-
 
 # =========================
 # SAFETY ALERTS
@@ -164,25 +183,49 @@ def report_illness():
 
     user = User.query.filter_by(username=session['user']).first()
 
-    if request.method == 'POST':
-        data = request.form
+    if not user:
+        return redirect(url_for('auth.home'))
 
-        # ✅ VALIDATION (NEW)
-        if not data.get('symptoms') or not data.get('date'):
+    # ✅ GET RESIDENT PROFILE
+    resident = Resident.query.filter_by(user_id=user.id).first()
+
+    if not resident:
+        flash("Please complete your profile first.", "error")
+        return redirect(url_for('account'))
+
+    if request.method == 'POST':
+        symptoms = request.form.get('symptoms', '').strip()
+        date = request.form.get('date')
+
+        # =========================
+        # ✅ VALIDATION
+        # =========================
+        if not symptoms or not date:
             flash("All fields are required!", "error")
             return redirect(url_for('resident.report_illness'))
 
-        resident = Resident.query.filter_by(user_id=user.id).first()
+        # ❌ Prevent very short or nonsense input
+        if len(symptoms) < 5:
+            flash("Please describe your symptoms properly.", "error")
+            return redirect(url_for('resident.report_illness'))
 
-        # ❌ REMOVE AUTO CREATE (FIXED)
-        if not resident:
-            flash("Please complete your profile first.", "error")
-            return redirect(url_for('account'))
+        # ❌ Prevent future date
+        try:
+            selected_date = datetime.strptime(date, "%Y-%m-%d").date()
+            if selected_date > datetime.today().date():
+                flash("Date cannot be in the future!", "error")
+                return redirect(url_for('resident.report_illness'))
+        except ValueError:
+            flash("Invalid date format!", "error")
+            return redirect(url_for('resident.report_illness'))
 
+        # =========================
+        # ✅ SAVE TO DATABASE
+        # =========================
         illness = Illness(
-            symptoms=data['symptoms'],
+            symptoms=symptoms,
             status="Reported",
-            date=data['date'],
+            date=selected_date,
             resident_id=resident.id
         )
 
@@ -192,7 +235,7 @@ def report_illness():
         flash("Illness reported successfully!", "success")
         return redirect(url_for('resident.case_status'))
 
-    return render_template('report_illness.html', fullname=user.fullname)
+    return render_template('report_illness.html', fullname=user.fullname, today=datetime.utcnow().date())
 
 
 # =========================
