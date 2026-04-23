@@ -30,6 +30,14 @@
 </div>
 <body>
 
+<!-- ✅ SUCCESS MODAL -->
+<div id="successModal" class="success-modal">
+    <div class="success-box">
+        <h3 id="successText">Message</h3>
+    </div>
+</div>
+
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -85,7 +93,12 @@
                     <input type="text" name="name" required>
 
                     <label>Position</label>
-                    <input type="text" name="position" required>
+                    <select name="position" required>
+                        <option value="">Select Position</option>
+                        <option value="Nurse">Nurse</option>
+                        <option value="Midwife">Midwife</option>
+                        <option value="Barangay Health Worker">Barangay Health Worker</option>
+                    </select>
 
                     <label>Contact</label>
                     <input type="text" name="contact" required>
@@ -110,94 +123,125 @@
         <input type="text" id="searchInput" placeholder="Search HealthWorker..." class="search">
 
         <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const searchInput = document.getElementById("searchInput");
-            const noDataMessage = document.getElementById("noDataMessage");
+            document.addEventListener("DOMContentLoaded", function () {
+                const searchInput = document.getElementById("searchInput");
+                const noSearchMessage = document.getElementById("noSearchMessage");
 
-            searchInput.addEventListener("keyup", function () {
-                const filter = this.value.toLowerCase();
-                const rows = document.querySelectorAll("#dataTable tbody tr"); // ✅ moved inside
+                searchInput.addEventListener("keyup", function () {
+                    const filter = this.value.toLowerCase();
+                    const sections = document.querySelectorAll(".purok-section");
 
-                let visibleCount = 0;
+                    let totalVisible = 0; // 🔥 track ALL visible rows
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
+                    sections.forEach(section => {
+                        const rows = section.querySelectorAll("tbody tr");
+                        let visibleCount = 0;
 
-                    if (text.includes(filter)) {
-                        row.style.display = "";
-                        visibleCount++;
+                        rows.forEach(row => {
+                            if (row.textContent.toLowerCase().includes(filter)) {
+                                row.style.display = "";
+                                visibleCount++;
+                                totalVisible++; // ✅ count globally
+                            } else {
+                                row.style.display = "none";
+                            }
+                        });
+
+                        // hide section if no match
+                        section.style.display = visibleCount > 0 ? "" : "none";
+                    });
+
+                    // 🔥 GLOBAL EMPTY CHECK
+                    if (totalVisible === 0) {
+                        noSearchMessage.style.display = "block";
                     } else {
-                        row.style.display = "none";
+                        noSearchMessage.style.display = "none";
                     }
                 });
-
-                // ✅ FIX: also check if table is empty
-                if (visibleCount === 0) {
-                    noDataMessage.style.display = "block";
-                } else {
-                    noDataMessage.style.display = "none";
-                }
             });
-        });
         </script>
 
-        <div class="table-container">
-        <!-- TABLE -->
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Worker ID</th>
-                    <th>Name</th>
-                    <th>Position</th>
-                    <th>Contact Number</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+        {% for position, workers in grouped_workers.items() %}
 
-            <tbody>
-                {% for w in workers %}
-                <tr>
-                    <td>W{{ "%03d"|format(w.id) }}</td>
-                    <td>{{ w.name }}</td>
-                    <td>{{ w.position }}</td>
-                    <td>{{ w.contact }}</td>
+        <div class="purok-section">
 
-                    <td>
-                        <!-- EDIT -->
-                        <button class="edit"
-                        onclick="openEditWorkerModal(
-                            '{{ w.id }}',
-                            '{{ w.name | escape }}',
-                            '{{ w.position | escape }}',
-                            '{{ w.contact | escape }}'
-                        )">✏️</button>
+            <!-- 🔷 HEADER -->
+            <div class="purok-header">
+                <h3>{{ position }}</h3>
+                <span class="purok-count">
+                    Total Workers: {{ workers|length }}
+                </span>
+            </div>
 
-                        <!-- DELETE -->
-                    <form action="{{ url_for('healthworker.delete_health_worker', id=w.id) }}" method="POST" style="display:inline;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- 📊 TABLE -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Worker ID</th>
+                            <th>Name</th>
+                            <th>Position</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                        <button type="button" class="delete"
-                            onclick='openDeleteModal(
-                                {{ w.id }},
-                                {{ w.name | tojson }}
-                            )'>
-                            🗑️
-                        </button>
-                    </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    <tbody>
+                    {% if workers %}
+                        {% for w in workers %}
+                        <tr>
+                            <td>{{ w.code }}</td>
+                            <td>{{ w.name }}</td>
+                            <td>{{ w.position }}</td>
+                            <td>{{ w.contact }}</td>
+                            <td>
+                                <button class="edit"
+                                onclick="openEditWorkerModal(
+                                    '{{ w.id }}',
+                                    '{{ w.name | escape }}',
+                                    '{{ w.position | escape }}',
+                                    '{{ w.contact | escape }}'
+                                )">✏️</button>
+
+                                <button type="button" class="delete"
+                                    onclick='openDeleteModal(
+                                        {{ w.id }},
+                                        {{ w.name | tojson }}
+                                    )'>
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:gray;">
+                                No workers in this category
+                            </td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
 
-        <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
-            No health workers found
-        </p>   
+        {% endfor %}
 
+        <p id="noSearchMessage" style="display:none; text-align:center; margin-top:20px; color:red;">
+            No results found
+        </p>
+
+        {% if grouped_workers.values() | sum(start=[]) | length == 0 %}
+        <p style="text-align:center; color:red; margin-top:20px;">
+            No health workers found
+        </p>
+        {% endif %}
     </div>
 
 </div>
+
+
 <!-- ✏️ EDIT HEALTH WORKER MODAL -->
 <div id="editWorkerModal" class="modal">
     <div class="modal-content">
@@ -215,7 +259,12 @@
             <input type="text" id="worker_name" readonly>
 
             <label>Position</label>
-            <input type="text" name="position" id="worker_position">
+            <select name="position" id="worker_position" required>
+                <option value="">Select Position</option>
+                <option value="Nurse">Nurse</option>
+                <option value="Midwife">Midwife</option>
+                <option value="Barangay Health Worker">Barangay Health Worker</option>
+            </select>
 
             <label>Contact</label>
             <input type="text" name="contact" id="worker_contact" readonly>
@@ -226,6 +275,53 @@
 
     </div>
 </div>
+
+<script>
+function showSuccess(message, type = "success") {
+    const modal = document.getElementById("successModal");
+    const box = modal.querySelector(".success-box");
+    const text = document.getElementById("successText");
+
+    text.textContent = message;
+
+    // remove old state
+    box.classList.remove("error");
+
+    if (type === "error") {
+        box.classList.add("error");
+    }
+
+    modal.classList.add("show");
+
+    setTimeout(() => {
+        modal.classList.remove("show");
+    }, 1500);
+}
+
+// ✅ ADD
+document.querySelector("#addWorkerModal form").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Health worker added successfully!");
+});
+
+// ✅ UPDATE
+document.getElementById("editWorkerForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Health worker updated successfully!");
+});
+
+// ✅ DELETE
+document.getElementById("deleteForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Health worker deleted successfully!");
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    const message = localStorage.getItem("successMessage");
+
+    if (message) {
+        showSuccess(message);
+        localStorage.removeItem("successMessage");
+    }
+});
+</script>
 
 <script>
 function openEditWorkerModal(id, name, position, contact) {

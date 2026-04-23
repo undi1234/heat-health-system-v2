@@ -39,7 +39,7 @@
 <div class="main">
 
     <h1>Temperature Records</h1>
-    <p class="subtitle">Real-time temperature data from online weather service</p>
+    <p class="subtitle">Latest temperature data from online weather service</p>
 
     <div class="container">
 
@@ -50,8 +50,6 @@
                 <p class="time">Last updated: {{ current_time }}</p>
             </div>
             <div class="controls">
-                <button class="auto-btn stop" onclick="stopAutoTemp()">⛔ Stop</button>
-                <button class="auto-btn start" onclick="startAutoTemp()">▶ Start</button>
                 <button class="refresh" onclick="refreshData()">⟳ Refresh Data</button>
             </div>
         </div>
@@ -61,11 +59,11 @@
             Temperature Source: <span>Online Weather API</span>
         </div>
 
+        {% if role == "HealthWorker" %}
         <form action="/add_temperature" method="POST" class="temp-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <select name="city" required>
-            <option value="">Select Location</option>
             <option value="Clarin,Bohol,PH">Clarin, Bohol</option>
         </select>
 
@@ -74,9 +72,10 @@
         </select>
 
         <button type="submit" onclick="this.innerText='Loading...'">
-            🌐 Get Temperature
+            🌐 Manual Fetch
         </button>
         </form>
+        {% endif %}
 
         <div class="table-container">
         <!-- TABLE -->
@@ -103,13 +102,14 @@
                         <td>{{ t.barangay }}</td> 
                         <td>
                             <!-- VIEW -->
-                            <a href="{{ url_for('view_temperature', id=t.id) }}">
-                                <button class="view">👁 View Details</button>
-                            </a>
+                            <button class="view"
+                            onclick="window.location.href='{{ url_for('view_temperature', id=t.id) }}'">
+                                👁 View Details
+                            </button>
 
                             <!-- DELETE -->
                             <button class="delete"
-                            onclick="openDeleteModal('{{ t.id }}', 'T{{ "%03d"|format(t.id) }}', 'temperature')">
+                            onclick='openDeleteModal("{{ t.id }}", "T{{ "%03d"|format(t.id) }}", "temperature")'>
                             🗑 Delete
                             </button>
                         </td>
@@ -226,7 +226,7 @@ function stopAutoTemp() {
     });
 }
 
-// AUTO REFRESH EVERY 60 SECONDS
+// AUTO REFRESH EVERY 5 MINUTES
 setInterval(refreshData, 300000);
 </script>
 

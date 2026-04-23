@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Resident, HealthWorker
 import os
 import re
-from sqlalchemy import func
+from sqlalchemy import func, text
 from extensions import limiter
 import time
 from flask import jsonify
@@ -33,14 +33,75 @@ def home():
 # CHECK USERNAME (AJAX)
 # =========================
 @auth_bp.route('/check-username')
+@limiter.limit("20 per minute")
 def check_username():
-    username = request.args.get('username')
+    username = request.args.get('username', '').strip()
 
     if not username:
         return jsonify({'exists': False})
 
-    exists = User.query.filter_by(username=username).first() is not None
+    exists = User.query.filter(func.lower(User.username) == username.lower()).first() is not None
     return jsonify({'exists': exists})
+
+
+# =========================
+# SUGGEST USERNAMES (AJAX)
+# =========================
+@auth_bp.route('/suggest-usernames')
+def suggest_usernames():
+    fullname = request.args.get('fullname', '').strip().lower()
+
+    suggestions = generate_username_suggestions(fullname)
+
+    available = []
+    for s in suggestions:
+        exists = User.query.filter(func.lower(User.username) == s).first()
+        if not exists:
+            available.append(s)
+
+    return jsonify({'suggestions': available})
+
+# =========================
+# USERNAME SUGGESTION LOGIC
+# =========================
+def generate_username_suggestions(fullname):
+    parts = fullname.lower().split()
+    if len(parts) < 2:
+        return []
+
+    first = parts[0]
+    last = parts[-1]
+
+    # optional nickname logic
+    nickname_map = {
+        "junrey": "jun",
+        "johnathan": "john",
+        "michael": "mike"
+    }
+
+    nick = nickname_map.get(first, first)
+
+    # dynamic year (optional, you can pass birthyear later)
+    year_suffix = str(time.localtime().tm_year)[-2:]
+
+    suggestions = [
+        first + last,
+        first + last + year_suffix,
+        first[0] + last,
+        last + first,
+        first + "_" + last,
+        first + last + str(int(time.time()) % 100),  # random 2 digits
+        nick + last
+    ]
+
+    # ✅ filter valid usernames
+    valid = [
+        s for s in suggestions
+        if re.match(r"^[a-z][a-z0-9_]{4,14}$", s)
+    ]
+
+    return list(dict.fromkeys(valid))  # remove duplicates
+
 
 # =========================
 # FULLNAME FORMATTER
@@ -77,6 +138,29 @@ def format_fullname(name):
 
     return " ".join(formatted)
 
+
+# =========================
+# GIBBERISH CHECK
+# =========================
+def is_gibberish(name):
+    vowels = "aeiou"
+    letters = re.sub(r"[^a-z]", "", name)
+
+    if len(letters) < 4:
+        return False  # allow short names like "Ng"
+
+    vowel_ratio = sum(1 for c in letters if c in vowels) / len(letters)
+
+    # less aggressive
+    if vowel_ratio < 0.15:
+        return True
+
+    # repeated letters spam
+    if re.search(r"(.)\1{3,}", name):
+        return True
+
+    return False
+
 # =========================
 # REGISTER PAGE
 # =========================
@@ -93,7 +177,7 @@ def register():
     data = request.form
 
     fullname = data.get('fullname', '').strip()
-    username = data.get('username', '').strip()
+    username = data.get('username', '').strip().lower()
     password = data.get('password')
     role = data.get('role')
 
@@ -104,48 +188,73 @@ def register():
     if not fullname or not username or not password:
         return render_template('register.html', general_error="All fields are required", form_data=data)
 
-    # CLEAN INPUT
+
+    # =========================
+    # FULLNAME VALIDATION (CLEAN FLOW)
+    # =========================
+
+    # 1. CLEAN INPUT
     fullname = re.sub(r"\s+", " ", fullname).strip()
 
-    # FORMAT
+    # 2. FORMAT NAME
     fullname = format_fullname(fullname)
 
-    # LENGTH LIMIT
+    # 3. LENGTH CHECK
     if len(fullname) > 50:
         return render_template('register.html',
             fullname_error="Full name is too long",
             form_data=data
         )
 
-    # MUST HAVE AT LEAST 2 WORDS
-    if len(fullname.split()) < 2:
+    # 4. MINIMUM WORDS
+    words = fullname.split()
+    if len(words) < 2:
         return render_template('register.html',
             fullname_error="Please enter full name (first and last name)",
             form_data=data
         )
 
+    # prepare lowercase once
+    words_lower = [w.lower() for w in words]
+
+    # 5. GIBBERISH CHECK
+    if is_gibberish(fullname.lower()):
+        return render_template('register.html',
+            fullname_error="Please enter a real name",
+            form_data=data
+        )
+
+    # 6. DUPLICATE WORDS CHECK
+
+    # all same word (juan juan)
+    if len(set(words_lower)) == 1:
+        return render_template('register.html',
+            fullname_error="Invalid full name",
+            form_data=data
+        )
+
+    # repeated words (juan dela dela cruz)
+    if len(words_lower) != len(set(words_lower)):
+        return render_template('register.html',
+            fullname_error="Repeated names are not allowed",
+            form_data=data
+        )
+
+    # 7. REGEX VALIDATION
+    fullname_pattern = r"^[A-Za-z]+(?:[ '-][A-Za-z]+)*$"
+    if not re.match(fullname_pattern, fullname):
+        return render_template('register.html',
+            fullname_error="Enter a valid full name (e.g., Juan Dela Cruz)",
+            form_data=data
+        )
+
+    # 8. DATABASE UNIQUENESS
     if User.query.filter(func.lower(User.fullname) == fullname.lower()).first():
         return render_template('register.html',
             fullname_error="Name already registered",
             form_data=data
         )
 
-    # BLOCK REPEATED WORDS (spam)
-    words = fullname.lower().split()
-    if len(set(words)) == 1:
-        return render_template('register.html',
-            fullname_error="Invalid full name",
-            form_data=data
-        )
-
-    # VALIDATION (FINAL)
-    fullname_pattern = r"^[A-Z][a-z]+(?: (?:[A-Z][a-z]+|[a-z]+|[A-Z]\.|[A-Z][a-z]+(?:['-][A-Z][a-z]+)?))*$"
-
-    if not re.match(fullname_pattern, fullname):
-        return render_template('register.html',
-            fullname_error="Enter a valid full name (e.g., Juan Dela Cruz)",
-            form_data=data
-        )
     
     # STRONG PASSWORD (uppercase, lowercase, number, special char)
     strong_password_pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$'
@@ -166,32 +275,88 @@ def register():
     if not role:
         return render_template('register.html', role_error="Please select a role", form_data=data)
 
-    # USERNAME VALIDATION
-    if not re.match("^[A-Za-z][A-Za-z0-9_]{4,14}$", username):
+    # USERNAME FORMAT
+    if not re.match(r"^[a-z][a-z0-9_]{4,14}$", username):
         return render_template('register.html',
-            username_error="Username must start with a letter (5–15 chars)",
+            username_error="5–15 chars, start with letter, no spaces",
+            form_data=data
+        )
+
+    # 🔥 NEW: CHECK IF USERNAME RELATES TO FULLNAME
+    parts = fullname.lower().split()
+
+    first = parts[0]
+    last = parts[-1]
+
+    if not (
+        first in username or
+        last in username or
+        (first + last) in username or
+        (first[0] + last) in username
+    ):
+        return render_template('register.html',
+            username_error="Username must be related to your name (e.g., juandelacruz)",
             form_data=data
         )
 
     # USERNAME EXISTS
-    if User.query.filter_by(username=username).first():
-        return render_template('register.html', username_error="Username already exists", form_data=data)
+    if User.query.filter(func.lower(User.username) == username).first():
+        return render_template('register.html',
+            username_error="Username already exists",
+            form_data=data
+        )
 
     # CONTACT VALIDATION
-    ph_pattern = r"^(09\d{9}|\+639\d{9})$"
-
     contact = resident_contact if role == "Resident" else worker_contact
     contact = re.sub(r"[^\d+]", "", contact)
 
     if not contact:
-        return render_template('register.html', contact_error="Contact number is required", form_data=data)
+        return render_template('register.html',
+            contact_error="Contact number is required",
+            form_data=data
+        )
 
-    if not re.match(ph_pattern, contact):
-        return render_template('register.html', contact_error="Invalid PH contact number", form_data=data)
+    # NORMALIZE
+    if contact.startswith("+639"):
+        contact = "0" + contact[3:]
 
-    # CHECK CONTACT UNIQUENESS
+    contact = re.sub(r"\D", "", contact)
+
+    # FORMAT CHECK
+    if not re.match(r"^09\d{9}$", contact):
+        return render_template('register.html',
+            contact_error="Invalid PH contact number",
+            form_data=data
+        )
+
+    # REPEATING DIGITS
+    if re.search(r"(\d)\1{6,}", contact):
+        return render_template('register.html',
+            contact_error="Invalid contact number",
+            form_data=data
+        )
+
+    # SEQUENTIAL DIGITS
+    if contact[2:] in "0123456789" or contact[2:] in "9876543210":
+        return render_template('register.html',
+            contact_error="Invalid contact number",
+            form_data=data
+        )
+
+    # (OPTIONAL) PREFIX CHECK
+    valid_prefixes = ["0905","0906","0907","0908", ...]
+    if contact[:4] not in valid_prefixes:
+        return render_template('register.html',
+            contact_error="Invalid network prefix",
+            form_data=data
+        )
+
+    # UNIQUENESS
     if Resident.query.filter_by(contact=contact).first() or HealthWorker.query.filter_by(contact=contact).first():
-        return render_template('register.html', contact_error="Contact already registered", form_data=data)
+        return render_template('register.html',
+            contact_error="Contact already registered",
+            form_data=data
+        )
 
     # HEALTH WORKER VALIDATION
     if role == "HealthWorker":
@@ -279,6 +444,7 @@ def login():
             attempts = 0
 
     # ✅ GET USER
+
     user = User.query.filter_by(username=username).first()
     dummy_hash = generate_password_hash("dummy123")
 

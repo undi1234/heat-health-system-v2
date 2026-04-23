@@ -11,6 +11,18 @@ body {
     background: #f4f7f6;
 }
 
+/* ===== GLOBAL ANIMATION SYSTEM ===== */
+:root {
+    --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+    --fast: 0.2s;
+    --normal: 0.35s;
+}
+
+/* smooth everything */
+* {
+    transition: all var(--fast) var(--ease);
+}
+
 /* ================= TOPBAR ================= */
 .topbar {
     position: fixed;
@@ -479,6 +491,123 @@ h1 {
     background: #bbb;
 }
 
+/* ✅ SUCCESS MODAL */
+.success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 9999;
+}
+
+.success-modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ✅ BOX */
+.success-box {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 280px;
+
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+
+    animation: popUp 0.3s ease;
+}
+
+/* TEXT */
+.success-box h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #27ae60;
+}
+
+/* ❌ REMOVE BUTTON STYLES (not needed anymore) */
+
+/* ERROR MODE */
+.success-box.error {
+    background: #ffe6e6;
+    border: 1px solid #e74c3c;
+}
+
+.success-box.error h3 {
+    color: #e74c3c;
+}
+
+select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 8px;
+}
+
+/* 🎬 ANIMATION */
+@keyframes popUp {
+    from {
+        transform: scale(0.7) translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+
+/* 🔷 PUROK SECTION */
+.purok-section {
+    margin-bottom: 30px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* HEADER */
+.purok-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.purok-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+/* TOTAL BADGE */
+.purok-count {
+    background: #4CAF50;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* TABLE SPACING */
+.purok-section table {
+    margin-top: 10px;
+}
+
 /* ================= ANIMATION ================= */
 @keyframes popUp {
     from {
@@ -533,6 +662,30 @@ h1 {
     border: none;
     border-radius: 5px;
     margin: 15px auto 0;
+}
+
+/* 🔥 INPUT ERROR ACCOUNT INFO */
+.input-error {
+    border: 1px solid #e74c3c !important;
+    background: #fff5f5;
+}
+
+.error-text {
+    color: #e74c3c;
+    font-size: 12px;
+    margin-top: 4px;
+    display: block;
+}
+
+/* LIVE VALIDATION */
+.valid {
+    border: 1px solid #2ecc71 !important;
+    background: #f0fff5;
+}
+
+.invalid {
+    border: 1px solid #e74c3c !important;
+    background: #fff5f5;
 }
 
 /* ================= TABLE ================= */
@@ -1036,6 +1189,77 @@ tbody tr {
     display: none;
 }
 
+
+
+/* ❌ Hide default browser eye (Chrome, Edge) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-inner-spin-button,
+input[type="password"]::-webkit-outer-spin-button {
+    display: none !important;
+}
+
+/* 🔥 MOST IMPORTANT (Chrome eye icon) */
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-password-toggle-button {
+    display: none !important;
+}
+
+
+.password-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-box input {
+    width: 100%;
+    padding-right: 40px; /* space for icon */
+}
+
+.eye-icon {
+    position: absolute;
+    right: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    color: #666;
+}
+
+.eye-icon:hover {
+    color: #000;
+}
+
+
+.flash {
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-weight: 500;
+    animation: fadeIn 0.4s ease;
+}
+
+.flash.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.flash.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* ================= MOBILE PERFECT FIX (HEALTHWORKER) ================= */
 @media (max-width: 768px) {
 
@@ -1123,10 +1347,21 @@ tbody tr {
         background: #f2f2f2;
         padding: 15px;
         flex-direction: column;
-        transition: all 0.3s ease;
+
         z-index: 999;
     }
 
+        .sidebar {
+        transition: transform 0.35s var(--ease), opacity 0.3s;
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    
     .sidebar.active {
         left: 0;
     }

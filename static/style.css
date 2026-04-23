@@ -5,6 +5,18 @@
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
+/* ===== GLOBAL ANIMATION SYSTEM ===== */
+:root {
+    --ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+    --fast: 0.2s;
+    --normal: 0.35s;
+}
+
+/* smooth everything */
+* {
+    transition: all var(--fast) var(--ease);
+}
+
 /* BODY */
 body {
     min-height: 100vh;
@@ -141,6 +153,125 @@ h2 {
     box-shadow: 0 0 0 2px rgba(230,0,0,0.1);
 }
 
+.input-field input.valid {
+    animation: popIn 0.2s ease;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+}
+
+/* INPUT ENTRY ANIMATION */
+.input-field {
+    opacity: 0;
+    transform: translateY(15px);
+    animation: fieldFade 0.5s ease forwards;
+}
+
+/* stagger effect */
+.input-field:nth-child(1) { animation-delay: 0.05s; }
+.input-field:nth-child(2) { animation-delay: 0.1s; }
+.input-field:nth-child(3) { animation-delay: 0.15s; }
+.input-field:nth-child(4) { animation-delay: 0.2s; }
+.input-field:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fieldFade {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.input-field input:focus,
+.input-field select:focus {
+    transform: scale(1.02);
+}
+
+.btn:active {
+    transform: scale(0.96);
+}
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+
+.input.invalid {
+    animation: shake 0.2s;
+}
+
+/* 🔥 SUGGESTION BOX */
+.suggestion-box {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: translateY(0);
+    overflow: hidden;
+}
+
+/* HIDDEN STATE (no space) */
+.suggestion-box.hide {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+    margin-top: 0;
+    pointer-events: none;
+    display: none;
+}
+
+/* VISIBLE STATE */
+.suggestion-box.has-items {
+    max-height: 100px; /* adjust if needed */
+}
+
+.suggestion-box:empty {
+    display: none;
+}
+
+/* TITLE */
+.suggestion-box.has-items::before {
+    content: "Suggestions";
+    width: 100%;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 3px;
+}
+
+/* CHIP STYLE */
+.suggestion-item {
+    background: #f1f5f9;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+/* HOVER EFFECT */
+.suggestion-item:hover {
+    background: #e0f2fe;
+    border-color: #38bdf8;
+    color: #0369a1;
+    transform: translateY(-1px);
+}
+
+/* CLICK FEEDBACK */
+.suggestion-item:active {
+    transform: scale(0.95);
+}
+
+.error-text:empty {
+    display: none;
+}
+
 /* BUTTON */
 .btn {
     width: 100%;
@@ -230,6 +361,26 @@ h2 {
     width: 100%;
     padding-right: 40px;
 }
+
+/* ❌ Hide default browser eye (Chrome, Edge) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-textfield-decoration-container,
+input[type="password"]::-webkit-inner-spin-button,
+input[type="password"]::-webkit-outer-spin-button {
+    display: none !important;
+}
+
+/* 🔥 MOST IMPORTANT (Chrome eye icon) */
+input[type="password"]::-webkit-contacts-auto-fill-button,
+input[type="password"]::-webkit-password-toggle-button {
+    display: none !important;
+}
+
 
 /* EYE ICON */
 .eye-icon {
@@ -361,5 +512,36 @@ h2 {
     .modal-content {
         width: 90%;
     }
-    
+
+    .frame {
+        width: 95%;
+        padding: 20px;
+        border-radius: 14px;
+        animation: mobilePop 0.4s ease;
+    }
+
+    @keyframes mobilePop {
+        0% {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .btn {
+        font-size: 15px;
+        padding: 14px;
+    }
+
+    input, select {
+        font-size: 16px; /* prevent zoom on iPhone */
+    }
+
+    .input-field {
+        margin-bottom: 18px;
+    }
+
 }

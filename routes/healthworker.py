@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from models import db, User, Resident, HealthWorker, Illness
+from models import db, User, Resident, HealthWorker, Illness, Temperature
 from sqlalchemy.exc import IntegrityError
+from collections import defaultdict
+
 
 healthworker_bp = Blueprint('healthworker', __name__)
 
@@ -33,7 +35,45 @@ def residents_management():
 
     residents = Resident.query.order_by(Resident.name.asc()).all()
 
-    return render_template('residents_management.html', residents=residents)
+    ALL_PUROKS = [
+        "P1 Manggahan",
+        "P2 Cocoahill",
+        "P3 Maligaya",
+        "P4 Camarin",
+        "P5 Riverside",
+        "P6 Buntod",
+        "P7 Tuog"
+    ]
+
+    grouped_residents = {p: [] for p in ALL_PUROKS}
+
+    for r in residents:
+        purok = r.address.split(" - ")[-1] if r.address else "Unknown"
+
+        # 🔥 TEMPERATURE LOGIC
+        if r.address:
+            barangay = r.address.split(" - ")[0]
+
+            temp = Temperature.query.filter_by(barangay=barangay)\
+                .order_by(Temperature.id.desc()).first()
+
+            r.temperature = temp.value if temp else "No Data"
+        else:
+            r.temperature = "N/A"
+
+        # ✅ avoid crash if unknown purok
+        if purok in grouped_residents:
+            grouped_residents[purok].append(r)
+        else:
+            grouped_residents.setdefault("Unknown", []).append(r)
+
+    # ✅ SORT PUROK (P1 → P7)
+    grouped_residents = dict(sorted(grouped_residents.items()))
+
+    return render_template(
+        'residents_management.html',
+        grouped_residents=grouped_residents
+    )
 
 # =========================
 # HEALTH WORKERS
@@ -45,17 +85,38 @@ def health_workers():
 
     workers = HealthWorker.query.order_by(HealthWorker.name.asc()).all()
 
-    workers_with_code = []
-    for i, w in enumerate(workers, start=1):
-        workers_with_code.append({
-            "code": f"W{i:03d}",
+    ALL_POSITIONS = [
+        "Nurse",
+        "Midwife",
+        "Barangay Health Worker"
+    ]
+
+    # ✅ initialize empty groups
+    grouped_workers = {p: [] for p in ALL_POSITIONS}
+
+    for w in workers:
+        position = w.position if w.position else "Unknown"
+
+        worker_data = {
             "id": w.id,
+            "code": f"W{w.id:03d}",
             "name": w.name,
             "position": w.position,
             "contact": w.contact
-        })
+        }
 
-    return render_template('health_workers.html', workers=workers_with_code)
+        if position in grouped_workers:
+            grouped_workers[position].append(worker_data)
+        else:
+            grouped_workers.setdefault("Unknown", []).append(worker_data)
+
+    # ✅ keep order clean
+    grouped_workers = dict(sorted(grouped_workers.items()))
+
+    return render_template(
+        'health_workers.html',
+        grouped_workers=grouped_workers
+    )
 
 # =========================
 # ADD HEALTH WORKERS
@@ -136,6 +197,37 @@ def delete_health_worker(id):
         )
 
     return redirect(url_for('healthworker.health_workers'))
+
+# =========================
+# ADD RESIDENTS
+# =========================
+@healthworker_bp.route('/add_resident', methods=['POST'])
+def add_resident():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return redirect(url_for('auth.home'))
+
+    name = request.form.get('name')
+    gender = request.form.get('gender')
+    address = request.form.get('address')
+    contact = request.form.get('contact')
+
+    if not all([name, gender, address, contact]):
+        flash("All fields are required!", "error")
+        return redirect(url_for('healthworker.residents_management'))
+
+    resident = Resident(
+        name=name,
+        gender=gender,
+        address=address,
+        contact=contact
+    )
+
+    db.session.add(resident)
+    db.session.commit()
+
+    flash("Resident added successfully!", "success")
+    return redirect(url_for('healthworker.residents_management'))
+
 
 # =========================
 # ILLNESS RECORDS

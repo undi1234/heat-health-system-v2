@@ -30,6 +30,13 @@
 </div>
 <body>
 
+<!-- ✅ SUCCESS MODAL -->
+<div id="successModal" class="success-modal">
+    <div class="success-box">
+        <h3 id="successText">Message</h3>
+    </div>
+</div>
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -79,7 +86,7 @@
                 <h3>Add Resident</h3>
                 <p class="subtitle">Enter resident details</p>
 
-            <form action="/add_resident" method="POST" class="form-grid">
+            <form action="{{ url_for('healthworker.add_resident') }}" method="POST" class="form-grid">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="form-group">
@@ -97,7 +104,16 @@
 
                 <div class="form-group full">
                     <label>Address</label>
-                    <input type="text" name="address" required>
+                    <select name="address" id="add_address" required>
+                        <option value="">Select Purok</option>
+                        <option value="Danahao - P1 Manggahan">P1 Manggahan</option>
+                        <option value="Danahao - P2 Cocoahill">P2 Cocoahill</option>
+                        <option value="Danahao - P3 Maligaya">P3 Maligaya</option>
+                        <option value="Danahao - P4 Camarin">P4 Camarin</option>
+                        <option value="Danahao - P5 Riverside">P5 Riverside</option>
+                        <option value="Danahao - P6 Buntod">P6 Buntod</option>
+                        <option value="Danahao - P7 Tuog">P7 Tuog</option>
+                    </select>
                 </div>
 
                 <div class="form-group full">
@@ -129,93 +145,123 @@
         <input type="text" id="searchInput" placeholder="Search residents..." class="search">
         
         <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const searchInput = document.getElementById("searchInput");
-            const noDataMessage = document.getElementById("noDataMessage");
+            document.addEventListener("DOMContentLoaded", function () {
+                const searchInput = document.getElementById("searchInput");
+                const noSearchMessage = document.getElementById("noSearchMessage");
 
-            searchInput.addEventListener("keyup", function () {
-                const filter = this.value.toLowerCase();
-                const rows = document.querySelectorAll("#dataTable tbody tr"); // ✅ moved inside
+                searchInput.addEventListener("keyup", function () {
+                    const filter = this.value.toLowerCase();
+                    const sections = document.querySelectorAll(".purok-section");
 
-                let visibleCount = 0;
+                    let totalVisible = 0; // 🔥 track ALL visible rows
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
+                    sections.forEach(section => {
+                        const rows = section.querySelectorAll("tbody tr");
+                        let visibleCount = 0;
 
-                    if (text.includes(filter)) {
-                        row.style.display = "";
-                        visibleCount++;
+                        rows.forEach(row => {
+                            if (row.textContent.toLowerCase().includes(filter)) {
+                                row.style.display = "";
+                                visibleCount++;
+                                totalVisible++; // ✅ count globally
+                            } else {
+                                row.style.display = "none";
+                            }
+                        });
+
+                        // hide section if no match
+                        section.style.display = visibleCount > 0 ? "" : "none";
+                    });
+
+                    // 🔥 GLOBAL EMPTY CHECK
+                    if (totalVisible === 0) {
+                        noSearchMessage.style.display = "block";
                     } else {
-                        row.style.display = "none";
+                        noSearchMessage.style.display = "none";
                     }
                 });
-
-                // ✅ FIX: also check if table is empty
-                if (visibleCount === 0) {
-                    noDataMessage.style.display = "block";
-                } else {
-                    noDataMessage.style.display = "none";
-                }
             });
-        });
         </script>
 
-        <div class="table-container">
-        <!-- TABLE -->
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Resident ID</th>
-                    <th>Name</th>
-                    <th>Gender</th>
-                    <th>Address</th>
-                    <th>Contact Number</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+        {% for purok, residents in grouped_residents.items() %}
 
-            <tbody>
-                {% for r in residents %}
-                <tr>
-                    <td>R{{ "%03d"|format(r.id) }}</td>
-                    <td>{{ r.name }}</td>
-                    <td>{{ r.gender }}</td>
-                    <td>{{ r.address }}</td>
-                    <td>{{ r.contact }}</td>
+        <div class="purok-section">
 
-                    <td>
-                        <!-- EDIT -->
-                        <button class="edit"
-                        onclick="openEditModal(
-                            '{{ r.id }}',
-                            '{{ r.name | escape }}',
-                            '{{ r.gender }}',
-                            '{{ r.address | escape }}',
-                            '{{ r.contact | escape }}'
-                        )">✏️</button>
+            <!-- 🔷 HEADER -->
+            <div class="purok-header">
+                <h3>{{ purok }}</h3>
+                <span class="purok-count">
+                    Total Residents: {{ residents|length }}
+                </span>
+            </div>
 
-                        <!-- DELETE -->
-                        <form action="{{ url_for('delete_resident', id=r.id) }}" method="POST" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- 📊 TABLE -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Resident ID</th>
+                            <th>Name</th>
+                            <th>Gender</th>
+                            <th>Address</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
 
-                            <button type="button" class="delete"
-                                onclick='openDeleteModal(
-                                    {{ r.id }},
-                                    {{ r.name | tojson }}
-                                )'>
-                                🗑️
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    <tbody>
+                    {% if residents %}
+                        {% for r in residents %}
+                        <tr>
+                            <td>R{{ "%03d"|format(r.id) }}</td>
+                            <td>{{ r.name }}</td>
+                            <td>{{ r.gender }}</td>
+                            <td>{{ r.address }}</td>
+                            <td>{{ r.contact }}</td>
+                            <td>
+                                <button class="edit"
+                                onclick="openEditModal(
+                                    '{{ r.id }}',
+                                    '{{ r.name | escape }}',
+                                    '{{ r.gender }}',
+                                    '{{ r.address | escape }}',
+                                    '{{ r.contact | escape }}'
+                                )">✏️</button>
+
+                                <button type="button" class="delete"
+                                    onclick='openDeleteModal(
+                                        {{ r.id }},
+                                        {{ r.name | tojson }}
+                                    )'>
+                                    🗑️
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" style="text-align:center; color:gray;">
+                                    No residents in this purok
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
 
-        <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
-            No residents found
-        </p> 
+    {% endfor %}
+
+    <p id="noSearchMessage" style="display:none; text-align:center; margin-top:20px; color:red;">
+        No results found
+    </p>
+
+    {% if grouped_residents.values() | sum(start=[]) | length == 0 %}
+    <p style="text-align:center; color:red; margin-top:20px;">
+        No residents found
+    </p>
+    {% endif %}
 
     </div>
 
@@ -247,7 +293,16 @@
 
         <div class="form-group full">
             <label>Address</label>
-            <input type="text" name="address" id="edit_address" required>
+            <select name="address" id="edit_address" required>
+                <option value="">Select Purok</option>
+                <option value="Danahao - P1 Manggahan">P1 Manggahan</option>
+                <option value="Danahao - P2 Cocoahill">P2 Cocoahill</option>
+                <option value="Danahao - P3 Maligaya">P3 Maligaya</option>
+                <option value="Danahao - P4 Camarin">P4 Camarin</option>
+                <option value="Danahao - P5 Riverside">P5 Riverside</option>
+                <option value="Danahao - P6 Buntod">P6 Buntod</option>
+                <option value="Danahao - P7 Tuog">P7 Tuog</option>
+            </select>
         </div>
 
         <div class="form-group full">
@@ -263,6 +318,64 @@
 
     </div>
 </div>
+
+<script>
+function showSuccess(message, type = "success") {
+    const modal = document.getElementById("successModal");
+    const box = modal.querySelector(".success-box");
+    const text = document.getElementById("successText");
+
+    text.textContent = message;
+
+    // remove old state
+    box.classList.remove("error");
+
+    if (type === "error") {
+        box.classList.add("error");
+    }
+
+    modal.classList.add("show");
+
+    setTimeout(() => {
+        modal.classList.remove("show");
+    }, 1500);
+}
+
+// ✅ ADD RESIDENT
+document.querySelector("#addResidentModal form").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Resident added successfully!");
+});
+
+// ✅ UPDATE RESIDENT
+document.getElementById("editForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Resident updated successfully!");
+});
+
+// ✅ DELETE RESIDENT
+document.getElementById("deleteForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Resident deleted successfully!");
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    const message = localStorage.getItem("successMessage");
+
+    if (message) {
+        showSuccess(message);
+        localStorage.removeItem("successMessage");
+    }
+});
+
+
+document.querySelectorAll(".purok-section").forEach(section => {
+    const visibleRows = section.querySelectorAll("tbody tr:not(.empty-row):not([style*='display: none'])");
+
+    if (visibleRows.length === 0) {
+        section.style.display = "none";
+    } else {
+        section.style.display = "";
+    }
+});
+</script>
 
 <script>
 function openEditModal(id, name, gender, address, contact) {

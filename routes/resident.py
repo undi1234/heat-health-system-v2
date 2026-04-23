@@ -60,6 +60,9 @@ def get_safety_reminders(level):
 # HELPER FUNCTION (NEW)
 # =========================
 def get_latest_heat_data(barangay):
+    if not barangay:
+        return None
+
     latest_temp = Temperature.query.filter_by(
         barangay=barangay
     ).order_by(Temperature.id.desc()).first()
@@ -70,7 +73,6 @@ def get_latest_heat_data(barangay):
     return HeatIndex.query.filter_by(
         temperature_id=latest_temp.id
     ).first()
-
 
 # =========================
 # RESIDENT DASHBOARD
@@ -93,7 +95,12 @@ def resident_dashboard():
         flash("Please complete your profile first.", "error")
         return redirect(url_for('account'))
 
-    latest = get_latest_heat_data(resident.address)
+    if resident.address:
+        barangay = resident.address.split(" - ")[0]   # 🔥 FIX
+    else:
+        barangay = None
+
+    latest = get_latest_heat_data(barangay)
 
     temperature = latest.temperature if latest else 0
     heat_index = latest.heat_index if latest else 0
@@ -152,7 +159,12 @@ def safety_alerts():
 
     current_time = datetime.now().strftime("%B %d, %Y | %I:%M:%S %p")
 
-    latest = get_latest_heat_data(resident.address)
+    if resident.address:
+        barangay = resident.address.split(" - ")[0]
+    else:
+        barangay = None
+
+    latest = get_latest_heat_data(barangay)
 
     temperature = latest.temperature if latest else 0
     heat_index = latest.heat_index if latest else 0

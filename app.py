@@ -9,26 +9,44 @@ import os
 import re
 from dotenv import load_dotenv
 from apscheduler.schedulers.background import BackgroundScheduler
-
+# =========================
+# LOAD ENV
+# =========================
 load_dotenv()
 
+# =========================
+# SECURITY
+# =========================
+from flask_wtf import CSRFProtect
+
+# =========================
+# IMPORT MODELS & DB
+# =========================
 from models import db, User, Resident, HealthWorker, Temperature, HeatIndex, Illness
+
+# =========================
+# IMPORT BLUEPRINTS
+# =========================
 from routes.auth import auth_bp
 from routes.resident import resident_bp
 from utils import compute_heat_index, get_heat_level
 from routes.healthworker import healthworker_bp
 from markupsafe import escape
-from flask_wtf import CSRFProtect
 
+# =========================
+# APP INIT
+# =========================
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
 app.permanent_session_lifetime = timedelta(minutes=30)
 
+# =========================
+# SECURITY CONFIG
+# =========================
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SECURE'] =  False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-csrf = CSRFProtect(app)
-SESSION_TIMEOUT = 30  # minutes
 
 # =========================
 # DATABASE CONFIG
@@ -38,6 +56,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = (
 )
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+
+# =========================
+# REGISTER BLUEPRINTS
+# =========================
 app.register_blueprint(auth_bp)
 app.register_blueprint(resident_bp)
 app.register_blueprint(healthworker_bp)
@@ -93,65 +115,130 @@ def account():
             db.session.add(profile)
             db.session.commit()
 
-    # ✅ UPDATE INFO
+    # =========================
+    # UPDATE INFO
+    # =========================
     if request.method == 'POST':
 
-        if not profile:
-            flash("Profile not found!", "error")
-            return redirect(url_for('account'))
+        contact_error = None
+        position_error = None
 
-        user.fullname = request.form['fullname']
-        session['fullname'] = user.fullname
-
-        # ✅ GET INPUT FIRST
-        new_contact = request.form['contact']
-
-        # ✅ REMOVE LETTERS / SYMBOLS
+        # 🔹 GET + CLEAN CONTACT
+        new_contact = request.form.get('contact', '').strip()
         new_contact = re.sub(r"[^\d+]", "", new_contact)
 
-        # ✅ VALIDATION (PH format)
-        pattern = r"^(09\d{9}|\+639\d{9})$"
+        # 🔹 NORMALIZE (+639 → 09)
+        if new_contact.startswith("+639"):
+            new_contact = "0" + new_contact[3:]
 
-        if not re.match(pattern, new_contact):
-            flash("Invalid contact number! Use 09XXXXXXXXX or +639XXXXXXXXX", "error")
-            return redirect(url_for('account'))
+        new_contact = re.sub(r"\D", "", new_contact)
 
-        # ✅ DUPLICATE CHECK HERE
-        existing_resident = Resident.query.filter(
-            Resident.contact == new_contact,
-            Resident.id != getattr(profile, 'id', None)
-        ).first()
+        # =========================
+        # CONTACT VALIDATION (SAME AS REGISTER)
+        # =========================
 
-        existing_worker = HealthWorker.query.filter(
-            HealthWorker.contact == new_contact,
-            HealthWorker.id != getattr(profile, 'id', None)
-        ).first()
+        # FORMAT
+        if not re.match(r"^09\d{9}$", new_contact):
+            contact_error = "Invalid PH contact number"
 
-        if existing_resident or existing_worker:
-            flash("Contact number already used!", "error")
-            return redirect(url_for('account'))
+        # REPEATING DIGITS (e.g., 09999999999)
+        elif re.search(r"(\d)\1{6,}", new_contact):
+            contact_error = "Invalid contact number"
 
-        # ✅ Continue update
-        if user.role == "Resident":
-            profile.address = request.form['address']
-            profile.contact = new_contact
+        # SEQUENTIAL (e.g., 09123456789)
+        elif new_contact[2:] in "0123456789" or new_contact[2:] in "9876543210":
+            contact_error = "Invalid contact number"
+
         else:
+            # UNIQUE CHECK (exclude self)
+            existing_resident = Resident.query.filter(
+                Resident.contact == new_contact,
+                Resident.user_id != user.id
+            ).first()
+
+            existing_worker = HealthWorker.query.filter(
+                HealthWorker.contact == new_contact,
+                HealthWorker.user_id != user.id
+            ).first()
+
+            if existing_resident or existing_worker:
+                contact_error = "Contact already used"
+
+        # =========================
+        # POSITION VALIDATION
+        # =========================
+        if user.role != "Resident":
+            position = request.form.get('position')
             valid_positions = ["Nurse", "Midwife", "Barangay Health Worker"]
 
-            position = request.form.get('position')
-
             if position not in valid_positions:
-                flash("Invalid position selected!", "error")
-                return redirect(url_for('account'))
+                position_error = "Invalid position selected"
 
+        # =========================
+        # STOP IF ERROR
+        # =========================
+        if contact_error or position_error:
+            return render_template(
+                'account.html',
+                user=user,
+                profile=profile,
+                contact_error=contact_error,
+                position_error=position_error
+            )
+
+        # =========================
+        # SAVE CLEAN DATA
+        # =========================
+        profile.contact = new_contact
+
+        if user.role == "Resident":
+            profile.address = request.form.get('address', '').strip()
+
+        else:
             profile.position = position
-            profile.contact = new_contact
 
         db.session.commit()
+
         flash("Profile updated successfully!", "success")
         return redirect(url_for('account'))
 
-    return render_template('account.html', user=user, profile=profile)
+    return render_template(
+        'account.html',
+        user=user,
+        profile=profile,
+        username=user.username,
+        role=user.role,
+        contact_error=None,
+        position_error=None
+    )
+
+
+# =========================
+# CHECK CONTACT NUMBER IN USE
+# =========================
+@app.route('/check-contact')
+def check_contact():
+    contact = request.args.get('contact')
+
+    if not contact:
+        return {"exists": False}
+
+    contact = re.sub(r"[^\d+]", "", contact)
+
+    user = User.query.filter_by(username=session.get('user')).first()
+
+    # 🔥 IMPORTANT: exclude current user’s own contact
+    resident = Resident.query.filter(
+        Resident.contact == contact,
+        Resident.user_id != user.id
+    ).first()
+
+    worker = HealthWorker.query.filter(
+        HealthWorker.contact == contact,
+        HealthWorker.user_id != user.id
+    ).first()
+
+    return {"exists": bool(resident or worker)}
 
 
 # =========================
@@ -162,50 +249,57 @@ def change_password():
     if 'user' not in session:
         return redirect('/')
 
-    # ✅ FIX: safe user_id check
-    user_id = session.get('user_id')
-
-    if not user_id:
-        return redirect('/')
-
-    user = User.query.get(user_id)
-
+    user = User.query.get(session.get('user_id'))
     if not user:
         return redirect('/')
 
-    # =========================
-    # 🔐 PASSWORD LOGIC
-    # =========================
-    current_password = request.form['current_password']
-    new_password = request.form['new_password']
-    confirm_password = request.form['confirm_password']
+    # 🔑 ERRORS
+    current_error = None
+    new_error = None
+    confirm_error = None
 
-    # ✅ Check current password
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    if not current_password or not new_password or not confirm_password:
+        return redirect(url_for('account'))
+
+    # ❌ VALIDATIONS
     if not check_password_hash(user.password, current_password):
-        flash("Current password is incorrect!", "error")
-        return redirect(request.referrer or url_for('account'))
+        current_error = "Incorrect current password"
 
-    # ❌ LETTER + NUMBER CHECK
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$'
     if not re.match(pattern, new_password):
-        flash("Password must be 8+ characters with uppercase, lowercase, and number!", "error")
-        return redirect(request.referrer or url_for('account'))
+        new_error = "Weak password (8+, A-Z, a-z, number)"
 
-    if current_password == new_password:
-        flash("New password must be different from current password!", "error")
-        return redirect(request.referrer or url_for('account'))
-    
-    # ❌ MATCH CHECK
+    elif current_password == new_password:
+        new_error = "Must be different from current password"
+
     if new_password != confirm_password:
-        flash("New passwords do not match!", "error")
-        return redirect(request.referrer or url_for('account'))
+        confirm_error = "Passwords do not match"
 
-    # ✅ UPDATE PASSWORD
+    # 🔥 IF ERROR → STAY (NO REDIRECT)
+    if current_error or new_error or confirm_error:
+        profile = (Resident.query.filter_by(user_id=user.id).first()
+                if user.role == "Resident"
+                else HealthWorker.query.filter_by(user_id=user.id).first())
+
+        return render_template(
+            'account.html',
+            user=user,
+            profile=profile,
+            current_error=current_error,
+            new_error=new_error,
+            confirm_error=confirm_error
+        )
+
+    # ✅ SAVE
     user.password = generate_password_hash(new_password)
     db.session.commit()
 
     flash("Password updated successfully!", "success")
-    return redirect(request.referrer or url_for('account'))
+    return redirect(url_for('account'))
 
 # =========================
 # RESIDENT CRUD
@@ -223,29 +317,6 @@ def residents():
         "address": r.address,
         "contact": r.contact
     } for r in data])
-
-# =========================
-# ADD RESIDENT 
-# =========================
-@app.route('/add_resident', methods=['POST'])
-def add_resident():
-    if 'user' not in session or session.get('role') != "HealthWorker":
-        return redirect('/')
-
-    data = request.form
-
-    r = Resident(
-        name=data['name'],
-        gender=data['gender'],
-        address=data['address'],
-        contact=data['contact']
-    )
-
-    db.session.add(r)
-    db.session.commit()
-
-    flash("Resident added successfully!", "success")
-    return redirect(url_for('healthworker.residents_management'))
 
 
 # =========================
@@ -364,20 +435,22 @@ def get_online_temperature(city):
         print("❌ API KEY NOT FOUND")
         return None
 
+    if not city:
+        return None
+
     url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
 
     try:
         response = requests.get(url, timeout=5)
-
-        print("RAW RESPONSE:", response.text)
-
         data = response.json()
 
+        app.logger.info(data)  # ✅ changed to info
+
         if response.status_code != 200:
-            print("API ERROR:", data)
+            app.logger.error(f"API Error: {data}")
             return None
 
-        return data['main']['temp']
+        return data.get('main', {}).get('temp')  # ✅ safe access
 
     except Exception as e:
         print("Request failed:", e)
@@ -533,6 +606,15 @@ auto_running = False
 if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
     scheduler.start()
 
+    # ✅ AUTO START JOB (no button needed)
+    scheduler.add_job(
+        func=auto_fetch_temperature,
+        trigger="interval",
+        hours=1
+    )
+
+    print("🔥 Auto temperature fetch started (every 1 hour)")
+
 # =========================
 # STOP AUTO FETCH
 # =========================
@@ -571,7 +653,7 @@ def start_auto_temp():
             job = scheduler.add_job(
                 func=auto_fetch_temperature,
                 trigger="interval",
-                minutes=30
+                hours=1   # ✅ every 1 hour
             )
 
         auto_running = True
@@ -656,7 +738,7 @@ def heat_index_records():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return redirect('/')
     
-    data = HeatIndex.query.all() or []
+    data = HeatIndex.query.order_by(HeatIndex.id.desc()).all()
     return render_template('heat_index_records.html', data=data)
 
 
@@ -668,7 +750,7 @@ def api_heat_index():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return jsonify({"error": "Unauthorized"}), 403
     
-    data = HeatIndex.query.all()
+    data = HeatIndex.query.order_by(HeatIndex.id.desc()).all()
     return jsonify([{
         "temperature": h.temperature,
         "heat_index": h.heat_index,
@@ -1004,8 +1086,10 @@ def delete_user(id):
 
 
 # =========================
-# REQUEST
+# SESSION SECURITY
 # =========================
+SESSION_TIMEOUT = 30  # minutes
+
 @app.before_request
 def security_middleware():
     if request.endpoint is None:

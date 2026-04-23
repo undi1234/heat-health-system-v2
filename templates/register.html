@@ -34,7 +34,7 @@
 
             <!-- Flask error (keep this) -->
             {% if fullname_error %}
-                <small class="error-text">{{ fullname_error }}</small>
+                <small id="fullnameServerError" class="error-text">{{ fullname_error }}</small>
             {% endif %}
         </div>
 
@@ -45,6 +45,7 @@
                 class="{% if username_error %}input-error{% endif %}" required>
 
             <small id="usernameLiveError" class="error-text"></small>
+            <div id="usernameSuggestion" class="suggestion-box"></div>
 
             {% if username_error %}
                 <small class="error-text">{{ username_error }}</small>
@@ -53,8 +54,20 @@
 
         <div class="input-field">
             <label>Password</label>
-            <input type="password" name="password"
-                class="{% if password_error %}input-error{% endif %}" required>
+
+            <div class="password-box">
+                <input type="password" name="password"
+                    class="{% if password_error %}input-error{% endif %}" required>
+
+                <!-- CLEAN EYE ICON -->
+                <span class="eye-icon" onclick="togglePassword(this)">
+                    <!-- open eye -->
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </span>
+            </div>
 
             {% if password_error %}
                 <small class="error-text">{{ password_error }}</small>
@@ -64,7 +77,6 @@
         <div class="input-field">
             <label>Role</label>
             <select name="role" id="role"
-                    onchange="toggleFields()"
                     class="{% if role_error %}input-error{% endif %}">
 
                 <option value="">Select Role</option>
@@ -97,15 +109,49 @@
 
             <div class="input-field">
                 <label>Address</label>
-                <select name="address" id="address">
-                    <option value="">Select Barangay</option>
-                        <option value="Danahao">Danahao</option>
-                </select>
+                    <select name="address" id="address" required>
+                        <option value="">Select Danahao Address Purok</option>
+
+                        <option value="Danahao - P1 Manggahan"
+                            {% if form_data and form_data.address == 'Danahao - P1 Manggahan' %}selected{% endif %}>
+                            P1 Manggahan
+                        </option>
+
+                        <option value="Danahao - P2 Cocoahill"
+                            {% if form_data and form_data.address == 'Danahao - P2 Cocoahill' %}selected{% endif %}>
+                            P2 Cocoahill
+                        </option>
+
+                        <option value="Danahao - P3 Maligaya"
+                            {% if form_data and form_data.address == 'Danahao - P3 Maligaya' %}selected{% endif %}>
+                            P3 Maligaya
+                        </option>
+
+                        <option value="Danahao - P4 Camarin"
+                            {% if form_data and form_data.address == 'Danahao - P4 Camarin' %}selected{% endif %}>
+                            P4 Camarin
+                        </option>
+
+                        <option value="Danahao - P5 Riverside"
+                            {% if form_data and form_data.address == 'Danahao - P5 Riverside' %}selected{% endif %}>
+                            P5 Riverside
+                        </option>
+
+                        <option value="Danahao - P6 Buntod"
+                            {% if form_data and form_data.address == 'Danahao - P6 Buntod' %}selected{% endif %}>
+                            P6 Buntod
+                        </option>
+
+                        <option value="Danahao - P7 Tuog"
+                            {% if form_data and form_data.address == 'Danahao - P7 Tuog' %}selected{% endif %}>
+                            P7 Tuog
+                        </option>
+                    </select>
             </div>
 
             <div class="input-field">
                 <label>Contact</label>
-                <input type="text" name="resident_contact"
+                <input type="text" id="resident_contact" name="resident_contact"
                     value="{{ form_data.resident_contact if form_data else '' }}"
                     class="{% if contact_error and form_data and form_data.role == 'Resident' %}input-error{% endif %}">
 
@@ -150,7 +196,7 @@
 
             <div class="input-field">
                 <label>Contact</label>
-                <input type="text" name="worker_contact"
+                <input type="text" id="worker_contact" name="worker_contact"
                     value="{{ form_data.worker_contact if form_data else '' }}"
                     class="{% if contact_error and form_data and form_data.role == 'HealthWorker' %}input-error{% endif %}">
 
@@ -181,41 +227,128 @@
     </div>
 </div>
 
-
 <script>
-function toggleFields() {
-    const role = document.getElementById("role").value;
+function togglePassword(el) {
+    const input = el.previousElementSibling;
 
-    const residentFields = document.getElementById("residentFields");
-    const workerFields = document.getElementById("workerFields");
-    const address = document.getElementById("address");
+    const eyeOpen = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>`;
 
-    if (role === "Resident") {
-        residentFields.style.display = "block";
-        workerFields.style.display = "none";
-        address.required = true; 
-    } else if (role === "HealthWorker") {
-        residentFields.style.display = "none";
-        workerFields.style.display = "block";
-        address.required = false;
+    const eyeClosed = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a21.77 21.77 0 0 1 5.06-6.94"/>
+            <path d="M1 1l22 22"/>
+        </svg>`;
+
+    if (input.type === "password") {
+        input.type = "text";
+        el.innerHTML = eyeClosed;
     } else {
-        residentFields.style.display = "none";
-        workerFields.style.display = "none";
-        address.required = false;
+        input.type = "password";
+        el.innerHTML = eyeOpen;
     }
 }
 </script>
 
 <script>
+function toggleFields() {
+    const role = document.getElementById("role").value;
+    console.log("ROLE:", role);
+
+    const residentFields = document.getElementById("residentFields");
+    const workerFields = document.getElementById("workerFields");
+    const address = document.getElementById("address");
+
+
+    function show(el) {
+        el.style.display = "block";
+        el.style.opacity = 0;
+        el.style.transform = "translateY(10px)";
+        setTimeout(() => {
+            el.style.opacity = 1;
+            el.style.transform = "translateY(0)";
+        }, 10);
+    }
+
+    function hide(el) {
+        el.style.opacity = 0;
+        el.style.transform = "translateY(10px)";
+        setTimeout(() => {
+            el.style.display = "none";
+        }, 200);
+    }
+
+    if (role === "Resident") {
+        show(residentFields);
+        hide(workerFields);
+
+        if (address) address.required = true;  // ✅ SAFE
+    } 
+    else if (role === "HealthWorker") {
+        show(workerFields);
+        hide(residentFields);
+
+        if (address) address.required = false; // ✅ SAFE
+    } 
+    else {
+        hide(residentFields);
+        hide(workerFields);
+
+        if (address) address.required = false; // ✅ SAFE
+    }
+}
+
+
+const roleSelect = document.getElementById("role");
+
+roleSelect.addEventListener("change", () => {
+    toggleFields();
+});
+
+</script>
+
+<script>
+const form = document.querySelector("form");
+
+// 🔹 SAVE inputs on typing
+form.addEventListener("input", () => {
+    const data = new FormData(form);
+    const obj = {};
+
+    data.forEach((value, key) => {
+        obj[key] = value;
+    });
+
+    localStorage.setItem("registerForm", JSON.stringify(obj));
+});
+
+
+// 🔹 CLEAR after submit (optional)
+form.addEventListener("submit", () => {
+    localStorage.removeItem("registerForm");
+});
+</script>
+
+<script>
 const fullnameInput = document.getElementById("fullname");
 const fullnameLiveError = document.getElementById("fullnameLiveError");
+const serverError = document.getElementById("fullnameServerError");
 
-// ✅ LIVE VALIDATION ONLY (NO FORMATTING HERE)
 fullnameInput.addEventListener("input", function () {
-    let value = fullnameInput.value;
+
+    // ✅ Remove only fullname server error
+    if (serverError) {
+        serverError.style.display = "none";
+    }
+
+    let value = fullnameInput.value.trim();
 
     const pattern = /^[A-Z][a-z]+(?: (?:[A-Z][a-z]+|[a-z]+|[A-Z]\.|[A-Z][a-z]+(?:['-][A-Z][a-z]+)?))*$/;
 
+    // ✅ STOP glitch when empty
     if (value.length === 0) {
         fullnameLiveError.textContent = "";
         fullnameInput.classList.remove("valid", "invalid");
@@ -244,14 +377,14 @@ fullnameInput.addEventListener("input", function () {
         return;
     }
 
-    if (!pattern.test(value)) {
+    if (!pattern.test(value)){
         fullnameLiveError.textContent = "Invalid name format";
         fullnameInput.classList.add("invalid");
         fullnameInput.classList.remove("valid");
         return;
     }
 
-    // ✅ Valid
+    // ✅ VALID
     fullnameLiveError.textContent = "";
     fullnameInput.classList.add("valid");
     fullnameInput.classList.remove("invalid");
@@ -260,7 +393,7 @@ fullnameInput.addEventListener("input", function () {
 
 // ✅ FORMAT ONLY WHEN USER LEAVES INPUT
 fullnameInput.addEventListener("blur", function () {
-    let value = fullnameInput.value;
+    let value = fullnameInput.value.trim();
 
     value = value.replace(/\s+/g, " ").trim();
 
@@ -284,32 +417,65 @@ fullnameInput.addEventListener("blur", function () {
 const usernameInput = document.getElementById("username");
 const usernameLiveError = document.getElementById("usernameLiveError");
 
+const usernameRelationError = document.createElement("small");
+usernameRelationError.className = "error-text";
+usernameInput.parentNode.appendChild(usernameRelationError);
+
 let timeout = null;
+let lastQuery = "";
 
 usernameInput.addEventListener("input", function () {
-    let value = usernameInput.value;
+    let value = usernameInput.value.trim().toLowerCase();
+    usernameInput.value = value;
 
-    const pattern = /^[A-Za-z][A-Za-z0-9_]{4,14}$/;
+    const pattern = /^[a-z][a-z0-9_]{4,14}$/;
 
-    // Format validation
+    // ✅ SHOW AGAIN if empty
+    if (value.length > 0) {
+        suggestionBox.classList.add("hide");
+    } else {
+        suggestionBox.classList.remove("hide");
+    }
+
     if (value.length === 0) {
         usernameLiveError.textContent = "";
+        usernameRelationError.textContent = "";
+        usernameInput.classList.remove("valid", "invalid");
         return;
     }
 
+    // ❌ FORMAT ERROR
     if (!pattern.test(value)) {
         usernameLiveError.textContent = "5–15 chars, start with letter, no spaces";
+        usernameRelationError.textContent = "";
         usernameInput.classList.add("invalid");
         usernameInput.classList.remove("valid");
         return;
     }
 
-    // ⏳ Delay request (prevent spam)
+    // ❌ FULLNAME CONNECTION CHECK
+    if (!isUsernameRelated(value, fullnameInput.value)) {
+        usernameRelationError.textContent = "Username should match your name (e.g., juandelacruz)";
+        usernameInput.classList.add("invalid");
+        usernameInput.classList.remove("valid");
+        return;
+    } else {
+        usernameRelationError.textContent = "";
+    }
+
+    // 🔄 CHECK AVAILABILITY
+    lastQuery = value;
     clearTimeout(timeout);
+
+    usernameLiveError.textContent = "Checking...";
+    usernameInput.classList.remove("valid", "invalid");
+
     timeout = setTimeout(async () => {
         try {
             const res = await fetch(`/check-username?username=${value}`);
             const data = await res.json();
+
+            if (value !== lastQuery || usernameInput.value.trim() === "") return;
 
             if (data.exists) {
                 usernameLiveError.textContent = "Username already taken";
@@ -323,33 +489,296 @@ usernameInput.addEventListener("input", function () {
         } catch {
             usernameLiveError.textContent = "Error checking username";
         }
-    }, 500); // debounce
+    }, 400);
 });
+
+let autoFilledUsername = false;
+let userTyped = false;
+
+const fullnameField = document.getElementById("fullname");
+const usernameField = document.getElementById("username");
+const suggestionBox = document.getElementById("usernameSuggestion");
+
+usernameField.addEventListener("input", () => {
+    userTyped = true;
+    autoFilledUsername = false;
+});
+
+let suggestTimeout = null;
+let suggestVersion = 0;
+
+fullnameField.addEventListener("input", () => {
+    clearTimeout(suggestTimeout);
+
+    // 🔥 INSTANT CLEAR (important UX fix)
+    if (!fullnameField.value.trim()) {
+        suggestionBox.innerHTML = "";
+        suggestionBox.classList.remove("has-items");
+
+        // ✅ CLEAR USERNAME ALWAYS
+        usernameField.value = "";
+        usernameField.classList.remove("valid", "invalid");
+        usernameLiveError.textContent = "";
+        usernameRelationError.textContent = "";
+
+        autoFilledUsername = false; // reset state
+        userTyped = false;
+
+        return; // safe here
+    }
+
+    // 🔥 clear ONLY if auto-filled
+    if (autoFilledUsername) {
+        usernameField.value = "";
+        usernameField.classList.remove("valid", "invalid");
+        usernameLiveError.textContent = "";
+    }
+    
+    suggestVersion++; // 🔥 invalidate old requests
+    const currentVersion = suggestVersion;
+
+    const rawName = fullnameField.value.trim();
+
+    // ✅ HARD STOP
+    if (!rawName || rawName.split(/\s+/).length < 2) {
+        suggestionBox.innerHTML = "";
+        suggestionBox.classList.remove("has-items");
+        return;
+    }
+
+    suggestTimeout = setTimeout(async () => {
+
+        // 🔥 STOP if outdated
+        if (currentVersion !== suggestVersion) return;
+
+        const latestName = fullnameField.value.trim();
+
+        // 🔥 DOUBLE CHECK
+        if (!latestName || latestName.split(/\s+/).length < 2) {
+            suggestionBox.innerHTML = "";
+            suggestionBox.classList.remove("has-items");
+            return;
+        }
+
+        const suggestions = await generateSmartSuggestions(latestName.toLowerCase());
+
+        // 🔥 STOP again after async
+        if (currentVersion !== suggestVersion) return;
+
+        const latestNow = fullnameField.value.trim();
+
+        // 🔥 FINAL HARD CHECK (MOST IMPORTANT)
+        if (!latestNow || latestNow.split(/\s+/).length < 2) {
+            suggestionBox.innerHTML = "";
+            suggestionBox.classList.remove("has-items");
+            return;
+        }
+
+        if (!suggestions.length) {
+            suggestionBox.innerHTML = "";
+            suggestionBox.classList.remove("has-items");
+            return;
+        }
+
+        if (!userTyped && usernameField.value === "") {
+            usernameField.value = suggestions[0];
+            autoFilledUsername = true; // 🔥 mark as auto
+            usernameField.dispatchEvent(new Event("input"));
+        }
+
+            suggestionBox.innerHTML = suggestions.map(s =>
+                `<span class="suggestion-item">${s}</span>`
+            ).join("");
+
+            // ✅ SHOW properly
+            suggestionBox.classList.remove("hide");
+            suggestionBox.classList.add("has-items");
+
+    }, 300);
+});
+
+async function generateSmartSuggestions(name) {
+    let parts = name.split(" ").filter(Boolean);
+    if (parts.length < 2) return [];
+
+    let first = parts[0];
+    let last = parts[parts.length - 1];
+
+    let year = new Date().getFullYear().toString().slice(-2);
+
+    let baseList = [
+        first + last,
+        first + last + year,
+        first[0] + last,
+        last + first,
+        first + "_" + last,
+        first + last + Math.floor(Math.random() * 90 + 10)
+    ].filter(s => /^[a-z][a-z0-9_]{4,14}$/.test(s));
+
+    const commonNames = ["juan", "john", "maria", "jose"];
+
+    if (commonNames.includes(first)) {
+        baseList.push(first + last + year);
+        baseList.push(first + "_" + last + year);
+    }
+
+    baseList = baseList.filter(s =>
+        /^[a-z][a-z0-9_]{4,14}$/.test(s)
+    );
+
+    let finalSuggestions = [];
+
+    let results = await Promise.all(
+        baseList.map(base => checkUsername(base))
+    );
+
+    for (let i = 0; i < baseList.length; i++) {
+        let base = baseList[i];
+        let available = results[i];
+
+        if (available) {
+            finalSuggestions.push(base);
+            continue;
+        }
+
+        // 🔥 SMART NUMBER STRATEGY (NOT 1–999 spam)
+        let numberPatterns = [
+            Math.floor(Math.random() * 90 + 10),   // 2 digits (23)
+            new Date().getFullYear().toString().slice(-2), // year (26)
+            Math.floor(Math.random() * 900 + 100) // 3 digits (456)
+        ];
+
+        let found = false;
+
+        for (let num of numberPatterns) {
+            let candidate = base + num;
+
+            if (!/^[a-z][a-z0-9_]{4,14}$/.test(candidate)) continue;
+
+            let ok = await checkUsername(candidate);
+
+            if (ok) {
+                finalSuggestions.push(candidate);
+                found = true;
+                break;
+            }
+        }
+
+        // fallback
+        if (!found) {
+            finalSuggestions.push(base + Math.floor(Math.random() * 999));
+        }
+    }
+
+    return finalSuggestions;
+}
+
+const usernameCache = new Map();
+
+async function checkUsername(username) {
+    // ✅ CACHE (instant if already checked)
+    if (usernameCache.has(username)) {
+        return usernameCache.get(username);
+    }
+
+    try {
+        const res = await fetch(`/check-username?username=${username}`);
+        const data = await res.json();
+
+        const available = !data.exists;
+
+        // store result
+        usernameCache.set(username, available);
+
+        return available;
+    } catch {
+        return false;
+    }
+}
+/* 🔥 CLICK TO AUTO-FILL */
+suggestionBox.addEventListener("click", function(e) {
+    if (e.target.classList.contains("suggestion-item")) {
+        usernameField.value = e.target.textContent;
+
+        // ✅ trigger validation
+        usernameField.dispatchEvent(new Event("input"));
+
+        // ✅ HIDE with animation
+        suggestionBox.classList.add("hide");
+    }
+});
+
+
+function isUsernameRelated(username, fullname) {
+    let parts = fullname.toLowerCase().trim().split(" ").filter(Boolean);
+
+    if (parts.length < 2) return true;
+
+    let first = parts[0];
+    let last = parts[parts.length - 1];
+
+    // ✅ allow partial match
+    return (
+        username.includes(first) ||
+        username.includes(last) ||
+        username.includes(first + last) ||
+        username.includes(first[0] + last)
+    );
+}
 </script>
 
 <script>
-function validateContact(inputId, errorId) {
+function formatPHNumber(value) {
+    value = value.replace(/[^\d+]/g, "");
+
+    // normalize
+    if (value.startsWith("+639")) {
+        value = "0" + value.slice(3);
+    }
+
+    value = value.replace(/[^\d]/g, "");
+    value = value.substring(0, 11);
+
+    if (value.length > 7) {
+        return value.replace(/(\d{4})(\d{3})(\d{0,4})/, "$1-$2-$3");
+    } else if (value.length > 4) {
+        return value.replace(/(\d{4})(\d{0,3})/, "$1-$2");
+    } else {
+        return value;
+    }
+}
+
+function validateAndFormat(inputId, errorId) {
     const input = document.getElementById(inputId);
     const error = document.getElementById(errorId);
 
     if (!input) return;
 
     input.addEventListener("input", () => {
-        let value = input.value;
+        let raw = input.value;
 
-        // Remove invalid characters
-        value = value.replace(/[^\d+]/g, "");
-        input.value = value;
+        // format UI
+        let formatted = formatPHNumber(raw);
+        input.value = formatted;
 
-        const pattern = /^(09\d{9}|\+639\d{9})$/;
+        // ✅ CLEAN PROPERLY HERE
+        let clean = input.value.replace(/[^\d+]/g, "");
 
-        if (value.length === 0) {
+        if (clean.startsWith("+639")) {
+            clean = "0" + clean.slice(3);
+        }
+
+        clean = clean.replace(/[^\d]/g, "");
+
+        const pattern = /^09\d{9}$/;
+
+        if (clean.length === 0) {
             error.textContent = "";
             input.classList.remove("valid", "invalid");
             return;
         }
 
-        if (!pattern.test(value)) {
+        if (!pattern.test(clean)) {
             error.textContent = "Invalid PH number";
             input.classList.add("invalid");
             input.classList.remove("valid");
@@ -361,22 +790,42 @@ function validateContact(inputId, errorId) {
     });
 }
 
-// Apply to both
-validateContact("resident_contact", "residentContactError");
-validateContact("worker_contact", "workerContactError");
+// Apply to both fields
+validateAndFormat("resident_contact", "residentContactError");
+validateAndFormat("worker_contact", "workerContactError");
 </script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const role = "{{ form_data.role if form_data else '' }}";
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector("form");
+    const roleSelect = document.getElementById("role");
 
-    if (role) {
-        document.getElementById("role").value = role;
+    // 🔹 LOAD saved data
+    const saved = localStorage.getItem("registerForm");
+
+    if (saved) {
+        const data = JSON.parse(saved);
+
+        Object.keys(data).forEach(key => {
+            const field = form.elements[key];
+            if (field) field.value = data[key];
+        });
     }
 
-    toggleFields(); 
-});
+    // 🔹 If no localStorage, fallback to Flask value
+    else {
+        const roleFromServer = "{{ form_data.role if form_data else '' }}";
+        if (roleFromServer) {
+            roleSelect.value = roleFromServer;
+        }
+    }
 
+    // 🔥 ALWAYS run AFTER values are set
+    toggleFields();
+});
+</script>
+
+<script>
 document.querySelector("form").addEventListener("submit", function(e) {
     const invalidInputs = document.querySelectorAll(".invalid");
 
@@ -386,8 +835,6 @@ document.querySelector("form").addEventListener("submit", function(e) {
     }
 });
 </script>
-
-
 
 </body>
 </html>

@@ -9,6 +9,13 @@
 
 <body>
 
+<!-- ✅ SUCCESS MODAL -->
+<div id="successModal" class="success-modal">
+    <div class="success-box">
+        <h3 id="successText">Message</h3>
+    </div>
+</div>
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -270,6 +277,53 @@
 
     </div>
 </div>
+
+<script>
+function showSuccess(message, type = "success") {
+    const modal = document.getElementById("successModal");
+    const box = modal.querySelector(".success-box");
+    const text = document.getElementById("successText");
+
+    text.textContent = message;
+
+    // remove old state
+    box.classList.remove("error");
+
+    if (type === "error") {
+        box.classList.add("error");
+    }
+
+    modal.classList.add("show");
+
+    setTimeout(() => {
+        modal.classList.remove("show");
+    }, 1500);
+}
+
+// ✅ SHOW AFTER RELOAD
+window.addEventListener("DOMContentLoaded", () => {
+    const message = localStorage.getItem("successMessage");
+    if (message) {
+        showSuccess(message);
+        localStorage.removeItem("successMessage");
+    }
+});
+
+// ✅ ADD CASE
+document.querySelector("#addCaseModal form").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Case added successfully!");
+});
+
+// ✅ UPDATE CASE
+document.getElementById("editForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Case updated successfully!");
+});
+
+// ✅ DELETE CASE
+document.getElementById("deleteForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Case deleted successfully!");
+});
+</script>
 
 <script>
 function openDeleteModal(id, name, type) {

@@ -12,9 +12,9 @@
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
-    <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
-        ☰
-    </button>
+        <button onclick="toggleSidebar()" style="font-size:20px; background:none; border:none; color:white; cursor:pointer;">
+            ☰
+        </button>
         <span class="logo">🌡️</span>
         <div>
             <h2>HEAT HEALTH MONITORING SYSTEM</h2>
@@ -27,14 +27,11 @@
             <strong>{{ username }}</strong>
             <small>{{ role }}</small>
         </div>
-        
         <button class="logout" onclick="openLogoutModal()">Logout</button>
     </div>
 </div>
 
-<!-- 🧭 SIDEBAR -->
 {% include 'sidebar.html' %}
-
 
 <!-- 📊 MAIN -->
 <div class="main">
@@ -47,75 +44,59 @@
     <div class="form-container">
 
         <h3>📋 Heat-Related Illness Report</h3>
+
         <form method="POST" action="{{ url_for('resident.report_illness') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <!-- NAME -->
             <label>Name</label>
-            <input type="text" value="{{ fullname }}" readonly>
+            <input type="text" name="fullname" value="{{ fullname }}" readonly>
 
             <!-- SYMPTOMS -->
             <label>Symptoms / Clinical Description</label>
-            <p class="subtitle">
-                Select common symptoms or describe your condition
-            </p>
+            <p class="subtitle">Select common symptoms or describe your condition</p>
 
-            <!-- 🔽 Dropdown -->
+            <!-- DROPDOWN -->
             <div class="select-group">
                 <select id="symptomDropdown" onchange="addSymptom()">
                     <option value=""> Select symptom </option>
 
-                    <optgroup label="Mild Symptoms">
-                        <option value="Headache">Headache</option>
-                        <option value="Dizziness">Dizziness</option>
-                        <option value="Fatigue">Fatigue</option>
+                    <optgroup label="Mild">
+                        <option>Headache</option>
+                        <option>Dizziness</option>
+                        <option>Fatigue</option>
                     </optgroup>
 
-                    <optgroup label="Moderate Symptoms">
-                        <option value="Muscle cramps">Muscle cramps</option>
-                        <option value="Excessive sweating">Excessive sweating</option>
-                        <option value="Nausea">Nausea</option>
+                    <optgroup label="Moderate">
+                        <option>Muscle cramps</option>
+                        <option>Excessive sweating</option>
+                        <option>Nausea</option>
                     </optgroup>
 
-                    <optgroup label="Severe Symptoms">
-                        <option value="Confusion">Confusion</option>
-                        <option value="Rapid heartbeat">Rapid heartbeat</option>
-                        <option value="Fainting">Fainting</option>
+                    <optgroup label="Severe">
+                        <option>Confusion</option>
+                        <option>Rapid heartbeat</option>
+                        <option>Fainting</option>
                     </optgroup>
-                </select>             
+                </select>
             </div>
 
-            <label>Severity Level</label>
-
-            <small id="autoFillNotice" style="color:green;"></small>
-
-            <div class="severity-buttons">
-                <button type="button" class="severity-btn mild" onclick="setSeverity('Mild', this)">🟢 Mild</button>
-                <button type="button" class="severity-btn moderate" onclick="setSeverity('Moderate', this)">🟡 Moderate</button>
-                <button type="button" class="severity-btn severe" onclick="setSeverity('Severe', this)">🔴 Severe</button>
-            </div>
-
-            <input type="hidden" name="severity" id="severityInput" required>
-
-            <!-- ✍️ Textarea -->
+            <!-- TEXTAREA -->
             <textarea 
-                name="symptoms" 
-                id="symptomsBox" 
-                required 
+                name="symptoms"
+                id="symptomsBox"
+                required
                 minlength="5"
-                pattern="[A-Za-z ,]+"
-                title="Only letters and commas are allowed (e.g., headache, dizziness)"
-                placeholder="Describe your symptoms clearly (e.g., headache, dizziness after long exposure to heat)...">
-            </textarea>   
-        
-            <small id="errorText" style="color:red; display:none; margin-top:5px;">
-                ⚠️ Please enter valid symptoms (e.g., headache, dizziness)
+                pattern="[A-Za-z0-9 ,.-]+"
+                placeholder="Describe your symptoms (e.g., headache, dizziness after heat exposure)"></textarea>
+
+            <small id="errorText" style="color:red; display:none;">
+                ⚠️ Please include at least one valid symptom
             </small>
 
-            <!-- 🤖 Suggestion -->
-            <small id="suggestionText" style="color: gray;"></small>
+            <small id="suggestionText" style="color:gray;"></small>
 
-            <button type="button" onclick="clearSymptoms()" class="btn" style="margin-top:8px;">
+            <button type="button" onclick="clearSymptoms()" class="btn">
                 Clear Symptoms
             </button>
 
@@ -123,217 +104,119 @@
             <label>Date</label>
             <input type="date" name="date" max="{{ today }}" required>
 
-            <!-- INFO BOX -->
+            <!-- INFO -->
             <div class="info-box">
                 <h4>Important Information:</h4>
                 <ul>
                     <li>A health worker will review your report</li>
-                    <li>You will be contacted for follow-up if needed</li>
-                    <li>For emergencies, please call emergency services immediately</li>
+                    <li>You will be contacted if needed</li>
+                    <li>For emergencies, call emergency services</li>
                 </ul>
             </div>
 
-            <!-- ✅ BUTTON NOW BELOW -->
             <button type="submit" class="submit-btn">Submit Report</button>
-
         </form>
 
     </div>
-    
 </div>
 
 {% include 'logout_modal.html' %}
 
+<!-- ================= JS ================= -->
 
 <script>
 function toggleSidebar() {
     document.querySelector('.sidebar').classList.toggle('active');
 }
 
-function clearSymptoms() {
-    document.getElementById("symptomsBox").value = "";
-    document.getElementById("suggestionText").innerText = "";
-}
-
-function validateSymptoms() {
-    const text = document.getElementById("symptomsBox").value.toLowerCase();
-    const errorBox = document.getElementById("errorText");
-
-    const validSymptoms = [
-        "headache", "dizziness", "fatigue",
-        "muscle cramps", "excessive sweating", "nausea",
-        "confusion", "rapid heartbeat", "fainting"
+/* ✅ SINGLE VALIDATOR */
+function isValidSymptoms(text) {
+    const valid = [
+        "headache","dizziness","fatigue",
+        "muscle cramps","excessive sweating","nausea",
+        "confusion","rapid heartbeat","fainting"
     ];
-
-    let isValid = validSymptoms.some(symptom => text.includes(symptom));
-
-    if (!isValid && text.length > 3) {
-        errorBox.style.display = "block";
-    } else {
-        errorBox.style.display = "none";
-    }
+    return valid.some(sym => text.includes(sym));
 }
 
-function setSeverity(value, element) {
+/* ✅ CLEAR */
+function clearSymptoms() {
+    const box = document.getElementById("symptomsBox");
+    box.value = "";
+    updateSuggestions();
+    document.getElementById("errorText").style.display = "none";
+}
+
+/* ✅ ADD FROM DROPDOWN */
+function addSymptom() {
+    const dropdown = document.getElementById("symptomDropdown");
     const textarea = document.getElementById("symptomsBox");
-    const notice = document.getElementById("autoFillNotice");
 
-    // set hidden input
-    document.getElementById("severityInput").value = value;
+    if (!dropdown.value) return;
 
-    // UI active state
-    document.querySelectorAll(".severity-btn").forEach(btn => {
-        btn.classList.remove("active");
-    });
-    element.classList.add("active");
-
-    // severity suggestions
-    const severitySymptoms = {
-        "Mild": ["Headache", "Dizziness", "Fatigue"],
-        "Moderate": ["Muscle cramps", "Excessive sweating", "Nausea"],
-        "Severe": ["Confusion", "Rapid heartbeat", "Fainting"]
-    };
-
-    let currentText = textarea.value.trim();
-
-    // convert existing to array
-    let currentList = currentText
-        ? currentText.split(",").map(s => s.trim().toLowerCase())
+    let current = textarea.value
+        ? textarea.value.split(",").map(s => s.trim().toLowerCase())
         : [];
 
-    let added = [];
+    if (!current.includes(dropdown.value.toLowerCase())) {
+        current.push(dropdown.value.toLowerCase());
+    }
 
-    // merge without duplicates
-    severitySymptoms[value].forEach(symptom => {
-        if (!currentList.includes(symptom.toLowerCase())) {
-            currentList.push(symptom.toLowerCase());
-            added.push(symptom);
-        }
-    });
-
-    // format nicely (capitalize first letter)
-    let finalList = currentList.map(s =>
+    textarea.value = current.map(s =>
         s.charAt(0).toUpperCase() + s.slice(1)
-    );
+    ).join(", ");
 
-    textarea.value = finalList.join(", ");
-
-    function clearSymptoms() {
-        document.getElementById("symptomsBox").value = "";
-        document.getElementById("suggestionText").innerText = "";
-
-        // 🔥 ADD THIS
-        updateSuggestions();
-        validateSymptoms();
-    }
-
-    // show feedback
-    if (added.length > 0) {
-        notice.innerText = "✔ Added: " + added.join(", ");
-    } else {
-        notice.innerText = "✔ All suggested symptoms already included";
-    }
-}
-</script>
-
-<script>
-function addSymptom() {
-    let dropdown = document.getElementById("symptomDropdown");
-    let textarea = document.getElementById("symptomsBox");
-
-    if (dropdown.value !== "") {
-        let current = textarea.value
-            ? textarea.value.split(",").map(s => s.trim().toLowerCase())
-            : [];
-
-        if (!current.includes(dropdown.value.toLowerCase())) {
-            current.push(dropdown.value.toLowerCase());
-        }
-
-        // format back
-        textarea.value = current.map(s =>
-            s.charAt(0).toUpperCase() + s.slice(1)
-        ).join(", ");
-
-        dropdown.value = "";
-
-        updateSuggestions(); // 🔥 FIX
-        validateSymptoms();
-    }
+    dropdown.value = "";
+    updateSuggestions();
 }
 
-/* 🔥 SMART SUGGESTION FUNCTION */
+/* ✅ SUGGESTIONS */
 function updateSuggestions() {
     const suggestions = {
-        "dizziness": "Possible heat exhaustion. Recommend hydration and rest.",
-        "headache": "May indicate dehydration or prolonged heat exposure.",
-        "rapid heartbeat": "Possible heat stress. Monitor closely.",
-        "excessive sweating": "Body is regulating heat. Ensure fluid intake.",
-        "muscle cramps": "Possible heat cramps due to electrolyte imbalance.",
-        "nausea": "Early symptom of heat exhaustion."
+        "dizziness": "Hydrate and rest",
+        "headache": "Possible dehydration",
+        "rapid heartbeat": "Monitor closely",
+        "excessive sweating": "Drink fluids",
+        "muscle cramps": "Electrolyte imbalance",
+        "nausea": "Early heat exhaustion"
     };
 
-    let textarea = document.getElementById("symptomsBox");
-    let suggestionBox = document.getElementById("suggestionText");
-
-    let text = textarea.value.toLowerCase();
-    let results = [];
+    let text = document.getElementById("symptomsBox").value.toLowerCase();
+    let output = [];
 
     for (let key in suggestions) {
         if (text.includes(key)) {
-            results.push(suggestions[key]);
+            output.push(suggestions[key]);
         }
     }
 
-    suggestionBox.innerText = results.length 
-        ? "💡 " + results.join(" | ")
-        : "";
+    document.getElementById("suggestionText").innerText =
+        output.length ? "💡 Advice: " + output.join(" • ") : "";
 }
 
-/* 🔥 AUTO LISTENER */
-document.addEventListener("DOMContentLoaded", function () {
-    let textarea = document.getElementById("symptomsBox");
-
-    textarea.addEventListener("input", updateSuggestions);
-});
-
-document.getElementById("symptomsBox").addEventListener("input", function() {
+/* ✅ INPUT LISTENER */
+document.getElementById("symptomsBox").addEventListener("input", function () {
     const text = this.value.toLowerCase();
     const errorBox = document.getElementById("errorText");
 
-    const validSymptoms = [
-        "headache", "dizziness", "fatigue",
-        "muscle cramps", "excessive sweating", "nausea",
-        "confusion", "rapid heartbeat", "fainting"
-    ];
+    updateSuggestions();
 
-    let isValid = validSymptoms.some(symptom => text.includes(symptom));
-
-    if (!isValid && text.length > 3) {
+    if (!isValidSymptoms(text) && text.length > 3) {
         errorBox.style.display = "block";
     } else {
         errorBox.style.display = "none";
     }
 });
 
+/* ✅ SUBMIT VALIDATION */
 document.querySelector("form").addEventListener("submit", function(e) {
     const text = document.getElementById("symptomsBox").value.toLowerCase();
     const errorBox = document.getElementById("errorText");
 
-    const validSymptoms = [
-        "headache", "dizziness", "fatigue",
-        "muscle cramps", "excessive sweating", "nausea",
-        "confusion", "rapid heartbeat", "fainting"
-    ];
-
-    let isValid = validSymptoms.some(symptom => text.includes(symptom));
-
-    if (!isValid) {
+    if (!isValidSymptoms(text)) {
         e.preventDefault();
-
-        errorBox.style.display = "block";   // 🔥 show error
-    } else {
-        errorBox.style.display = "none";    // 🔥 hide if valid
+        errorBox.style.display = "block";
+        errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 });
 </script>

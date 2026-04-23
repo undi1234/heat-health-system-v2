@@ -41,11 +41,23 @@
             {% endif %}
         </div>
 
+        
         <div class="input-field">
             <label>Password</label>
-            <input type="password" name="password"
-                class="{% if password_error %}input-error{% endif %}"
-                required>
+
+            <div class="password-box">
+                <input type="password" name="password"
+                    class="{% if password_error %}input-error{% endif %}" required>
+
+                <!-- CLEAN EYE ICON -->
+                <span class="eye-icon" onclick="togglePassword(this)">
+                    <!-- open eye -->
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                </span>
+            </div>
 
             {% if password_error %}
                 <small class="error-text">{{ password_error }}</small>
@@ -59,6 +71,32 @@
     <div class="register-box" onclick="goRegister()">Register Account</div>
 
 </div>   
+
+<script>
+function togglePassword(el) {
+    const input = el.previousElementSibling;
+
+    const eyeOpen = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/>
+            <circle cx="12" cy="12" r="3"/>
+        </svg>`;
+
+    const eyeClosed = `
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a21.77 21.77 0 0 1 5.06-6.94"/>
+            <path d="M1 1l22 22"/>
+        </svg>`;
+
+    if (input.type === "password") {
+        input.type = "text";
+        el.innerHTML = eyeClosed;
+    } else {
+        input.type = "password";
+        el.innerHTML = eyeOpen;
+    }
+}
+</script>
 
 <script>
 function goRegister(){
