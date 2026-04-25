@@ -7,6 +7,8 @@ from sqlalchemy import func, text
 from extensions import limiter
 import time
 from flask import jsonify
+from app import csrf
+
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -172,6 +174,7 @@ def register_page():
 # =========================
 # REGISTER
 # =========================
+@csrf.exempt
 @auth_bp.route('/register', methods=['POST'])
 @limiter.limit("3 per hour")
 def register():
@@ -377,38 +380,44 @@ def register():
                 form_data=data
             )
 
-    # CREATE USER
-    new_user = User(
-        fullname=fullname,
-        username=username,
-        password=generate_password_hash(password),
-        role=role
-    )
+    try:
+        # CREATE USER
+        new_user = User(
+            fullname=fullname,
+            username=username,
+            password=generate_password_hash(password),
+            role=role
+        )
 
-    db.session.add(new_user)
-    db.session.commit()
+        db.session.add(new_user)
+        db.session.flush()
 
-    if role == "Resident":
-        db.session.add(Resident(
-            name=fullname,
-            gender=data.get('gender'),
-            address=data.get('address'),
-            contact=contact,
-            user_id=new_user.id
-        ))
+        if role == "Resident":
+            db.session.add(Resident(
+                name=fullname,
+                gender=data.get('gender'),
+                address=data.get('address'),
+                contact=contact,
+                user_id=new_user.id
+            ))
 
-    elif role == "HealthWorker":
-        db.session.add(HealthWorker(
-            name=fullname,
-            position=data.get('position'),
-            contact=contact,
-            user_id=new_user.id
-        ))
+        elif role == "HealthWorker":
+            db.session.add(HealthWorker(
+                name=fullname,
+                position=data.get('position'),
+                contact=contact,
+                user_id=new_user.id
+            ))
 
-    db.session.commit()
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print("Registration error:", e)
+        flash("An error occurred during registration. Please try again.", "danger")
+        return render_template('register.html', form_data=data)
 
-    flash("Account created successfully!", "success")
-    return redirect(url_for('auth.home'))
+#       flash("Account created successfully!", "success")
+#        return redirect(url_for('auth.home'))
 
 
 # =========================
