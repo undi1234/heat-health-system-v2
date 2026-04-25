@@ -221,11 +221,11 @@ def report_illness():
             flash("Please describe your symptoms properly.", "error")
             return redirect(url_for('resident.report_illness'))
 
-        # ❌ Prevent future date
+        # ❌ Enforce today-only date
         try:
             selected_date = datetime.strptime(date, "%Y-%m-%d").date()
-            if selected_date > datetime.today().date():
-                flash("Date cannot be in the future!", "error")
+            if selected_date != datetime.utcnow().date():
+                flash("Date must be today's date.", "error")
                 return redirect(url_for('resident.report_illness'))
         except ValueError:
             flash("Invalid date format!", "error")

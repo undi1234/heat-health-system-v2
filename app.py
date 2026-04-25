@@ -1026,7 +1026,7 @@ def add_case():
 
     try:
         selected_date = datetime.strptime(case_date, "%Y-%m-%d").date()
-        if selected_date != datetime.today().date():
+        if selected_date != datetime.utcnow().date():
             flash("Date must be today's date.", "error")
             return redirect(url_for('healthworker.illness_records'))
     except ValueError:
