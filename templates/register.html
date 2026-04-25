@@ -208,8 +208,13 @@
             </div>
 
             <div class="input-field">
-                <label>Health Worker Code</label>
-                <input type="text" name="worker_code">
+                <label>Health Worker Code <span style="color: red;">*</span></label>
+                <input type="text" 
+                    name="worker_code" 
+                    placeholder="Enter your Health Worker Code"
+                    value="{{ form_data.worker_code if form_data else '' }}"
+                    class="{% if worker_code_error %}input-error{% endif %}"
+                    required>
 
                 {% if worker_code_error %}
                     <small class="error-text">{{ worker_code_error }}</small>

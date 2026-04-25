@@ -353,15 +353,29 @@ def register():
 
     # HEALTH WORKER VALIDATION
     if role == "HealthWorker":
-        worker_code = data.get('worker_code')
-        if not worker_code or worker_code != os.getenv("HEALTH_WORKER_CODE"):
-            return render_template('register.html', worker_code_error="Invalid Health Worker Code", form_data=data)
+        worker_code = data.get('worker_code', '').strip()
+        expected_code = os.getenv("HEALTH_WORKER_CODE", "").strip()
+        
+        if not worker_code:
+            return render_template('register.html', 
+                worker_code_error="Health Worker Code is required", 
+                form_data=data
+            )
+        
+        if worker_code != expected_code:
+            return render_template('register.html', 
+                worker_code_error="Invalid Health Worker Code. Please check and try again.", 
+                form_data=data
+            )
 
         valid_positions = ["Nurse", "Midwife", "Barangay Health Worker"]
-        position = data.get('position')
+        position = data.get('position', '').strip()
 
-        if position not in valid_positions:
-            return render_template('register.html', position_error="Invalid position", form_data=data)
+        if not position or position not in valid_positions:
+            return render_template('register.html', 
+                position_error="Please select a valid position", 
+                form_data=data
+            )
 
     # CREATE USER
     new_user = User(
