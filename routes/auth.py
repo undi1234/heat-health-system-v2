@@ -410,14 +410,13 @@ def register():
             ))
 
         db.session.commit()
+        flash("Account created successfully! You can now log in.", "success")
+        return redirect(url_for('auth.home'))
     except Exception as e:
         db.session.rollback()
         print("Registration error:", e)
         flash("An error occurred during registration. Please try again.", "danger")
         return render_template('register.html', form_data=data)
-
-#       flash("Account created successfully!", "success")
-#        return redirect(url_for('auth.home'))
 
 
 # =========================

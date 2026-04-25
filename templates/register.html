@@ -101,9 +101,16 @@
 
             <div class="input-field">
                 <label>Gender</label>
-                <select name="gender">
-                    <option>Male</option>
-                    <option>Female</option>
+                <select name="gender" id="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male"
+                        {% if form_data and form_data.gender == 'Male' %}selected{% endif %}>
+                        Male
+                    </option>
+                    <option value="Female"
+                        {% if form_data and form_data.gender == 'Female' %}selected{% endif %}>
+                        Female
+                    </option>
                 </select>
             </div>
 
@@ -261,11 +268,11 @@ function togglePassword(el) {
 <script>
 function toggleFields() {
     const role = document.getElementById("role").value;
-
     const residentFields = document.getElementById("residentFields");
     const workerFields = document.getElementById("workerFields");
     const address = document.getElementById("address");
-
+    const residentInputs = residentFields.querySelectorAll('input, select');
+    const workerInputs = workerFields.querySelectorAll('input, select');
 
     function show(el) {
         el.style.display = "block";
@@ -289,28 +296,58 @@ function toggleFields() {
         show(residentFields);
         hide(workerFields);
 
-        if (address) address.required = true;  // ✅ SAFE
-    } 
-    else if (role === "HealthWorker") {
+        residentInputs.forEach(el => {
+            el.disabled = false;
+            if (el.name === 'resident_contact' || el.name === 'address' || el.name === 'gender') {
+                el.required = true;
+            }
+        });
+        workerInputs.forEach(el => {
+            el.disabled = true;
+            el.required = false;
+        });
+
+        if (address) address.required = true;
+    } else if (role === "HealthWorker") {
         show(workerFields);
         hide(residentFields);
 
-        if (address) address.required = false; // ✅ SAFE
-    } 
-    else {
+        workerInputs.forEach(el => {
+            el.disabled = false;
+            if (el.name === 'position' || el.name === 'worker_contact' || el.name === 'worker_code') {
+                el.required = true;
+            }
+        });
+        residentInputs.forEach(el => {
+            el.disabled = true;
+            el.required = false;
+        });
+
+        if (address) address.required = false;
+    } else {
         hide(residentFields);
         hide(workerFields);
 
-        if (address) address.required = false; // ✅ SAFE
+        residentInputs.forEach(el => {
+            el.disabled = true;
+            el.required = false;
+        });
+        workerInputs.forEach(el => {
+            el.disabled = true;
+            el.required = false;
+        });
+
+        if (address) address.required = false;
     }
 }
 
-
 const roleSelect = document.getElementById("role");
+if (roleSelect) {
+    roleSelect.addEventListener("change", toggleFields);
+}
 
-roleSelect.addEventListener("change", () => {
-    toggleFields();
-});
+document.addEventListener("DOMContentLoaded", toggleFields);
+
 
 </script>
 
