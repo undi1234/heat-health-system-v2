@@ -21,15 +21,14 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL") or (
-        f"mysql+pymysql://{os.getenv('DB_USER','root')}:{os.getenv('DB_PASSWORD','')}@localhost/{os.getenv('DB_NAME','heat_health_db')}"
-    )
-    # Railway MySQL requires SSL
+
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'connect_args': {
-            'ssl': {
-                'ca': None,  # Railway handles SSL certificates
-                'check_hostname': False
-            }
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+        "connect_args": {
+            "ssl": {"ssl_mode": "REQUIRED"}
         }
     }
+
