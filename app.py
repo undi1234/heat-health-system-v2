@@ -1003,16 +1003,44 @@ def add_case():
 
     data = request.form
 
-    resident = Resident.query.filter_by(name=data['resident_name']).first()
-
-    if not resident:
-        flash("Resident not found!", "error")
+    resident_id = data.get('resident_id')
+    if not resident_id:
+        flash("Please select a registered resident before adding a case.", "error")
         return redirect(url_for('healthworker.illness_records'))
 
+    resident = Resident.query.get(resident_id)
+    if not resident:
+        flash("Resident not registered. Only registered residents can be added.", "error")
+        return redirect(url_for('healthworker.illness_records'))
+
+    symptoms = data.get('symptoms', '').strip()
+    case_date = data.get('date')
+
+    if not symptoms or len(symptoms) < 5:
+        flash("Please enter valid symptoms for the illness case.", "error")
+        return redirect(url_for('healthworker.illness_records'))
+
+    if not case_date:
+        flash("Date is required.", "error")
+        return redirect(url_for('healthworker.illness_records'))
+
+    try:
+        selected_date = datetime.strptime(case_date, "%Y-%m-%d").date()
+        if selected_date != datetime.today().date():
+            flash("Date must be today's date.", "error")
+            return redirect(url_for('healthworker.illness_records'))
+    except ValueError:
+        flash("Invalid date format.", "error")
+        return redirect(url_for('healthworker.illness_records'))
+
+    status = data.get('status', 'Reported')
+    if status not in ["Reported", "Under Treatment", "Recovered"]:
+        status = "Reported"
+
     case = Illness(
-        symptoms=data['symptoms'],
-        status=data['status'],
-        date=data['date'],
+        symptoms=symptoms,
+        status=status,
+        date=selected_date,
         resident_id=resident.id,
         healthworker_id=worker.id
     )

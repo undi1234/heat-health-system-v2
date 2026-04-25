@@ -3,6 +3,7 @@ from models import db, User, Resident, HealthWorker, Illness, Temperature
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 from collections import defaultdict
+from datetime import datetime
 
 
 healthworker_bp = Blueprint('healthworker', __name__)
@@ -247,12 +248,15 @@ def illness_records():
         return redirect(url_for('auth.home'))
 
     records = Illness.query.order_by(Illness.id.desc()).all()
-    workers = HealthWorker.query.all()  
+    workers = HealthWorker.query.order_by(HealthWorker.name.asc()).all()
+    residents = Resident.query.order_by(Resident.name.asc()).all()
 
     return render_template(
         'illness_records.html',
         records=records,
-        workers=workers  
+        workers=workers,
+        residents=residents,
+        today=datetime.utcnow().date()
     )
 
 # =========================

@@ -69,11 +69,56 @@
                 <form action="/add_case" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <label>Resident Name</label>
-                    <input type="text" name="resident_name" required>
+                    <label>Resident</label>
+                    <select name="resident_id" required>
+                        <option value="">Select Registered Resident</option>
+                        {% for resident in residents %}
+                            <option value="{{ resident.id }}">
+                                {{ resident.name }}{% if resident.address %} — {{ resident.address }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
 
                     <label>Symptoms</label>
-                    <input type="text" name="symptoms" required>
+                    <p class="subtitle">Select common symptoms or describe the condition</p>
+
+                    <div class="select-group">
+                        <select id="symptomDropdown" onchange="addSymptom()">
+                            <option value=""> Select symptom </option>
+                            <optgroup label="Mild">
+                                <option value="Headache">Headache</option>
+                                <option value="Dizziness">Dizziness</option>
+                                <option value="Fatigue">Fatigue</option>
+                            </optgroup>
+                            <optgroup label="Moderate">
+                                <option value="Muscle cramps">Muscle cramps</option>
+                                <option value="Excessive sweating">Excessive sweating</option>
+                                <option value="Nausea">Nausea</option>
+                            </optgroup>
+                            <optgroup label="Severe">
+                                <option value="Confusion">Confusion</option>
+                                <option value="Rapid heartbeat">Rapid heartbeat</option>
+                                <option value="Fainting">Fainting</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <textarea 
+                        name="symptoms"
+                        id="symptomsBox"
+                        required
+                        minlength="5"
+                        placeholder="Describe your symptoms (e.g., headache, dizziness after heat exposure)"></textarea>
+
+                    <small id="errorText" style="color:red; display:none;">
+                        ⚠️ Please include at least one valid symptom
+                    </small>
+
+                    <small id="suggestionText" style="color:gray;"></small>
+
+                    <button type="button" onclick="clearSymptoms()" class="btn">
+                        Clear Symptoms
+                    </button>
 
                     <label>Status</label>
                     <select name="status">
@@ -83,7 +128,7 @@
                     </select>
 
                     <label>Date</label>
-                    <input type="date" name="date" required>
+                    <input type="date" name="date" id="caseDate" value="{{ today }}" max="{{ today }}" required>
 
                     <label>Handled By</label>
                     <input type="text" name="handled_by" value="{{ username }}" readonly>
@@ -103,6 +148,88 @@
         function closeAddCaseModal() {
             document.getElementById("addCaseModal").style.display = "none";
         }
+
+        function isValidSymptoms(text) {
+            const valid = [
+                "headache","dizziness","fatigue",
+                "muscle cramps","excessive sweating","nausea",
+                "confusion","rapid heartbeat","fainting"
+            ];
+            return valid.some(sym => text.includes(sym));
+        }
+
+        function clearSymptoms() {
+            const box = document.getElementById("symptomsBox");
+            box.value = "";
+            updateSuggestions();
+            document.getElementById("errorText").style.display = "none";
+        }
+
+        function addSymptom() {
+            const dropdown = document.getElementById("symptomDropdown");
+            const textarea = document.getElementById("symptomsBox");
+
+            if (!dropdown.value) return;
+
+            let current = textarea.value
+                ? textarea.value.split(",").map(s => s.trim().toLowerCase())
+                : [];
+
+            if (!current.includes(dropdown.value.toLowerCase())) {
+                current.push(dropdown.value.toLowerCase());
+            }
+
+            textarea.value = current.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(", ");
+            dropdown.value = "";
+            updateSuggestions();
+        }
+
+        function updateSuggestions() {
+            const suggestions = {
+                "dizziness": "Hydrate and rest",
+                "headache": "Possible dehydration",
+                "rapid heartbeat": "Monitor closely",
+                "excessive sweating": "Drink fluids",
+                "muscle cramps": "Electrolyte imbalance",
+                "nausea": "Early heat exhaustion"
+            };
+
+            let text = document.getElementById("symptomsBox").value.toLowerCase();
+            let output = [];
+
+            for (let key in suggestions) {
+                if (text.includes(key)) {
+                    output.push(suggestions[key]);
+                }
+            }
+
+            document.getElementById("suggestionText").innerText =
+                output.length ? "💡 Advice: " + output.join(" • ") : "";
+        }
+
+        document.getElementById("symptomsBox").addEventListener("input", function () {
+            const text = this.value.toLowerCase();
+            const errorBox = document.getElementById("errorText");
+
+            updateSuggestions();
+
+            if (!isValidSymptoms(text) && text.length > 3) {
+                errorBox.style.display = "block";
+            } else {
+                errorBox.style.display = "none";
+            }
+        });
+
+        document.querySelector("#addCaseModal form").addEventListener("submit", function(e) {
+            const text = document.getElementById("symptomsBox").value.toLowerCase();
+            const errorBox = document.getElementById("errorText");
+
+            if (!isValidSymptoms(text)) {
+                e.preventDefault();
+                errorBox.style.display = "block";
+                errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        });
         </script>
 
         <!-- SEARCH -->
