@@ -18,17 +18,18 @@ class DevelopmentConfig(Config):
         f"mysql+pymysql://{os.getenv('DB_USER','root')}:{os.getenv('DB_PASSWORD','')}@localhost/{os.getenv('DB_NAME','heat_health_db')}"
     )
 
-import os
-
 class ProductionConfig(Config):
     DEBUG = False
     SESSION_COOKIE_SECURE = True
 
     uri = os.getenv("DATABASE_URL")
 
-    # Fix Render postgres URL
-    if uri and uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql+psycopg2://", 1)
+    if uri:
+        # Fix Render postgres
+        if uri.startswith("postgres://"):
+            uri = uri.replace("postgres://", "postgresql+psycopg2://", 1)
+        elif uri.startswith("postgresql://"):
+            uri = uri.replace("postgresql://", "postgresql+psycopg2://", 1)
 
     SQLALCHEMY_DATABASE_URI = uri
 
