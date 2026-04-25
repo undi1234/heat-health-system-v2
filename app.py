@@ -18,7 +18,7 @@ load_dotenv()
 # =========================
 # SECURITY
 # =========================
-from flask_wtf import CSRFProtect
+from extensions import csrf
 from extensions import limiter
 
 # =========================
@@ -39,7 +39,7 @@ from markupsafe import escape
 # APP INIT
 # =========================
 app = Flask(__name__)
-csrf = CSRFProtect(app)
+csrf.init_app(app)
 
 # Load configuration from environment
 from config import DevelopmentConfig, ProductionConfig

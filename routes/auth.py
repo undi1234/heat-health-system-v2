@@ -7,7 +7,7 @@ from sqlalchemy import func, text
 from extensions import limiter
 import time
 from flask import jsonify
-from app import csrf
+from extensions import csrf 
 
 
 auth_bp = Blueprint('auth', __name__)
