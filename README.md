@@ -3,7 +3,10 @@ Heat Health Monitoring System using Flask and MySQL. Ongoing development project
 
 ## Deployment
 
-### Prerequisites
+### Quick Start: Deploy to Render with GitHub
+See **[DEPLOYMENT_RENDER.md](DEPLOYMENT_RENDER.md)** for step-by-step instructions to deploy directly from GitHub to Render in minutes.
+
+### Local Development
 - Python 3.11+ or compatible version
 - MySQL server running and accessible
 - `.venv` virtual environment activated
