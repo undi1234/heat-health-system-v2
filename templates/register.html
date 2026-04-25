@@ -21,7 +21,6 @@
 
     <!-- ✅ FORM CONNECTED -->
     <form action="/register" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="input-field">
             <label>Full Name</label>
@@ -261,7 +260,6 @@ function togglePassword(el) {
 <script>
 function toggleFields() {
     const role = document.getElementById("role").value;
-    console.log("ROLE:", role);
 
     const residentFields = document.getElementById("residentFields");
     const workerFields = document.getElementById("workerFields");
@@ -494,7 +492,7 @@ usernameInput.addEventListener("input", function () {
         } catch {
             usernameLiveError.textContent = "Error checking username";
         }
-    }, 400);
+    }, 200);
 });
 
 let autoFilledUsername = false;
@@ -783,7 +781,21 @@ function validateAndFormat(inputId, errorId) {
             return;
         }
 
-        if (!pattern.test(clean)) {
+        let isValid = pattern.test(clean);
+
+        // Additional checks like backend
+        if (isValid) {
+            // REPEATING DIGITS
+            if (/(\d)\1{6,}/.test(clean)) {
+                isValid = false;
+            }
+            // SEQUENTIAL DIGITS
+            else if (clean.slice(2) === "0123456789" || clean.slice(2) === "9876543210") {
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
             error.textContent = "Invalid PH number";
             input.classList.add("invalid");
             input.classList.remove("valid");
