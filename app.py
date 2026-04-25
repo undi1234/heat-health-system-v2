@@ -74,6 +74,10 @@ def init_db():
 # Initialize database on startup
 init_db()
 
+# Application factory support
+def create_app():
+    return app
+
 # =========================
 # REGISTER BLUEPRINTS
 # =========================
