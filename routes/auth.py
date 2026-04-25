@@ -173,6 +173,7 @@ def register_page():
 # REGISTER
 # =========================
 @auth_bp.route('/register', methods=['POST'])
+@limiter.limit("3 per hour")
 def register():
     data = request.form
 
@@ -344,7 +345,11 @@ def register():
         )
 
     # (OPTIONAL) PREFIX CHECK
-    valid_prefixes = ["0905","0906","0907","0908", ...]
+    valid_prefixes = [
+        "0905", "0906", "0907", "0908", "0909",  # Globe/TM
+        "0910", "0911", "0912", "0913", "0914", "0915", "0916", "0917",  # Smart/PLDT
+        "0918", "0919", "0920", "0921", "0922", "0923", "0924", "0925"
+    ]
     if contact[:4] not in valid_prefixes:
         return render_template('register.html',
             contact_error="Invalid network prefix",

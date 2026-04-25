@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from models import db, User, Resident, HealthWorker, Illness, Temperature
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 from collections import defaultdict
 
 
@@ -47,17 +48,25 @@ def residents_management():
 
     grouped_residents = {p: [] for p in ALL_PUROKS}
 
+    # Pre-load all latest temperatures in one query
+    latest_temps = db.session.query(
+        Temperature.barangay, 
+        func.max(Temperature.id).label('id')
+    ).group_by(Temperature.barangay).subquery()
+    
+    temps = db.session.query(Temperature).filter(
+        Temperature.id.in_(db.session.query(latest_temps.c.id))
+    ).all()
+    
+    temp_dict = {t.barangay: t.value for t in temps}
+
     for r in residents:
         purok = r.address.split(" - ")[-1] if r.address else "Unknown"
 
-        # 🔥 TEMPERATURE LOGIC
+        # Optimized temperature lookup
         if r.address:
             barangay = r.address.split(" - ")[0]
-
-            temp = Temperature.query.filter_by(barangay=barangay)\
-                .order_by(Temperature.id.desc()).first()
-
-            r.temperature = temp.value if temp else "No Data"
+            r.temperature = temp_dict.get(barangay, "No Data")
         else:
             r.temperature = "N/A"
 

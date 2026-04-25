@@ -8,6 +8,7 @@ import requests
 import os
 import re
 from dotenv import load_dotenv
+from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 # =========================
 # LOAD ENV
@@ -18,6 +19,7 @@ load_dotenv()
 # SECURITY
 # =========================
 from flask_wtf import CSRFProtect
+from extensions import limiter
 
 # =========================
 # IMPORT MODELS & DB
@@ -38,24 +40,17 @@ from markupsafe import escape
 # =========================
 app = Flask(__name__)
 csrf = CSRFProtect(app)
-app.secret_key = os.getenv("SECRET_KEY", "fallback_secret")
-app.permanent_session_lifetime = timedelta(minutes=30)
 
-# =========================
-# SECURITY CONFIG
-# =========================
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SECURE'] =  False
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
-# =========================
-# DATABASE CONFIG
-# =========================
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@localhost/{os.getenv('DB_NAME')}"
+# Load configuration from environment
+from config import DevelopmentConfig, ProductionConfig
+app.config.from_object(
+    ProductionConfig if os.getenv("FLASK_ENV") == "production" else DevelopmentConfig
 )
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions
+limiter.init_app(app)
 db.init_app(app)
+migrate = Migrate(app, db)
 
 # =========================
 # REGISTER BLUEPRINTS
@@ -556,44 +551,47 @@ def add_temperature():
 def auto_fetch_temperature():
     
     with app.app_context():
+        try:
+            city = os.getenv("DEFAULT_CITY")
+            temp_value = get_online_temperature(city)
 
-        city = os.getenv("DEFAULT_CITY")
-        temp_value = get_online_temperature(city)
+            if temp_value is None:
+                app.logger.warning(f"Failed to fetch temperature for {city}")
+                return
 
-        if temp_value is None:
-            print("Auto fetch failed")
-            return
+            barangays = ["Danahao"]
 
-        barangays = ["Danahao"]
+            current_date = datetime.now().strftime("%Y-%m-%d")
+            current_time = datetime.now().strftime("%I:%M:%S %p")
 
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        current_time = datetime.now().strftime("%I:%M:%S %p")
+            for brgy in barangays:
+                new_temp = Temperature(
+                    value=temp_value,
+                    date=current_date,
+                    time=current_time,
+                    barangay=brgy   
+                )
+                db.session.add(new_temp)
+                db.session.flush()
 
-        for brgy in barangays:
-            new_temp = Temperature(
-                value=temp_value,
-                date=current_date,
-                time=current_time,
-                barangay=brgy   
-            )
-            db.session.add(new_temp)
-            db.session.flush()
+                heat_index_value, status = compute_heat_index(temp_value)
 
-            heat_index_value, status = compute_heat_index(temp_value)
+                new_heat = HeatIndex(
+                    temperature=temp_value,
+                    heat_index=round(heat_index_value, 2),
+                    status=status,
+                    date=current_date,
+                    temperature_id=new_temp.id
+                )
 
-            new_heat = HeatIndex(
-                temperature=temp_value,
-                heat_index=round(heat_index_value, 2),
-                status=status,
-                date=current_date,
-                temperature_id=new_temp.id
-            )
+                db.session.add(new_heat)
 
-            db.session.add(new_heat)
+            db.session.commit()
 
-        db.session.commit()
-
-        print("✅ Auto temperature saved for barangay")
+            app.logger.info("✅ Auto temperature saved for barangay")
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Auto fetch failed: {e}")
 
 
 # =========================
@@ -1126,11 +1124,25 @@ def security_middleware():
         return redirect(url_for('auth.home'))
         
 # =========================
+# =========================
+# ERROR HANDLERS
+# =========================
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
 # RUN APP
 # =========================
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        if app.config.get('DEBUG'):
+            db.create_all()
 
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=app.config.get('DEBUG', False))
