@@ -53,6 +53,28 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 # =========================
+# DATABASE INITIALIZATION
+# =========================
+def init_db():
+    """Initialize database tables"""
+    try:
+        with app.app_context():
+            # Test database connection first
+            with db.engine.connect() as conn:
+                conn.execute(db.text("SELECT 1"))
+                app.logger.info("Database connection successful")
+
+            db.create_all()
+            app.logger.info("Database tables created successfully")
+    except Exception as e:
+        app.logger.error(f"Database initialization failed: {e}")
+        # Don't crash the app if DB init fails - let it start and show error on first DB operation
+        pass
+
+# Initialize database on startup
+init_db()
+
+# =========================
 # REGISTER BLUEPRINTS
 # =========================
 app.register_blueprint(auth_bp)
@@ -1136,6 +1158,7 @@ def page_not_found(e):
 def internal_error(e):
     db.session.rollback()
     return render_template('500.html'), 500
+
 
 # RUN APP
 # =========================
