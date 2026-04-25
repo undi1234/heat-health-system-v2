@@ -14,9 +14,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SESSION_COOKIE_SECURE = False
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL") or (
-        f"mysql+pymysql://{os.getenv('DB_USER','root')}:{os.getenv('DB_PASSWORD','')}@localhost/{os.getenv('DB_NAME','heat_health_db')}"
-    )
+    SQLALCHEMY_DATABASE_URI = "sqlite:///development.db"
 
 class ProductionConfig(Config):
     DEBUG = False
