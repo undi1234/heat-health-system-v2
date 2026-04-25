@@ -627,17 +627,17 @@ scheduler = BackgroundScheduler()
 job = None
 auto_running = False
 
-if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+# ✅ START SCHEDULER (works in dev and production)
+try:
     scheduler.start()
-
-    # ✅ AUTO START JOB (no button needed)
     scheduler.add_job(
         func=auto_fetch_temperature,
         trigger="interval",
         hours=1
     )
-
     print("🔥 Auto temperature fetch started (every 1 hour)")
+except Exception as e:
+    print(f"Scheduler already started or error: {e}")
 
 # =========================
 # STOP AUTO FETCH
