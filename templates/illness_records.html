@@ -176,7 +176,11 @@
                                 {% for row in residents %}
                                 <tr>
                                     <td>{{ row.resident_name }}</td>
-                                    <td>{{ row.case_count }}</td>
+                                    <td>
+                                        <span class="case-link"
+                                            onclick='handleCaseClick(this, {{ row.all_cases | tojson }}, {{ row.resident_name | tojson }})'>
+                                        </span>
+                                    </td>
                                     <td>
                                         {% if row.latest_status == "Recovered" %}
                                             <span class="recovered">{{ row.latest_status }}</span>
@@ -275,6 +279,17 @@
 
         </form>
 
+    </div>
+</div>
+
+<!--RESIDENT CASES -->
+<div id="casesModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCasesModal()">&times;</span>
+
+        <h3 id="casesTitle">Resident Cases</h3>
+
+        <ul id="casesList"></ul>
     </div>
 </div>
 
@@ -392,6 +407,45 @@ function handleDeleteClick(btn) {
     const name = btn.dataset.name;
 
     openDeleteModal(id, name, 'illness');
+}
+
+function showCases(cases, name) {
+    const modal = document.getElementById("casesModal");
+    const list = document.getElementById("casesList");
+    const title = document.getElementById("casesTitle");
+
+    title.textContent = "Symptoms of " + name;
+    list.innerHTML = "";
+
+    if (!cases || cases.length === 0) {
+        list.innerHTML = "<li>No symptoms found</li>";
+    } else {
+        cases.forEach(c => {
+            list.innerHTML += `<li>${c.symptoms}</li>`;
+        });
+    }
+
+    modal.style.display = "flex";
+}
+
+function handleCaseClick(element, cases, name) {
+    // remove active from all
+    document.querySelectorAll(".case-link").forEach(el => {
+        el.classList.remove("active");
+    });
+
+    // add active to clicked
+    element.classList.add("active");
+
+    showCases(cases, name);
+}
+
+function closeCasesModal() {
+    document.getElementById("casesModal").style.display = "none";
+}
+
+function closeCasesModal() {
+    document.getElementById("casesModal").style.display = "none";
 }
 
 window.onclick = function(event) {

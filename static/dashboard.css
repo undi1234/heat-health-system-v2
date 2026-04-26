@@ -245,6 +245,53 @@ h1 {
 }
 
 /* ================= BUTTONS ================= */
+.case-link {
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.case-link:hover {
+    text-decoration: underline;
+}
+
+.case-link.active {
+    background: #2563eb;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+#casesModal .modal-content {
+    max-width: 400px;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#casesTitle {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+#casesList {
+    list-style: none;
+    padding: 0;
+}
+
+#casesList li {
+    background: #f1f5f9;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border-left: 5px solid #2563eb;
+    transition: 0.2s;
+}
+
+/* hover effect */
+#casesList li:hover {
+    background: #e0ecff;
+}
+
 
 /* ================= BUTTON BASE ================= */
 .btn {

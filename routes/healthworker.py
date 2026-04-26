@@ -295,12 +295,16 @@ def illness_records():
                 'health_workers': set(),
                 'statuses': set(),
                 'symptoms': set(),
+                'all_cases': []
             }
 
         summary = resident_summary[resident_id]
         summary['case_count'] += 1
         summary['statuses'].add(case.status)
         summary['symptoms'].add(case.symptoms)
+        summary['all_cases'].append({
+            "symptoms": case.symptoms,
+        })
 
         if case.healthworker and case.healthworker.name:
             summary['health_workers'].add(case.healthworker.name)
