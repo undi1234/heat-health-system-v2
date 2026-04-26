@@ -16,6 +16,18 @@
     </div>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true, category_filter=["illness_success", "illness_error"]) %}
+    {% if messages %}
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const msg = "{{ messages[0][1] }}";
+                const type = "{{ messages[0][0] }}";
+                showSuccess(msg, type);
+            });
+        </script>
+    {% endif %}
+{% endwith %}
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -352,7 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showSuccess(message);
         localStorage.removeItem("successMessage");
     }
-
+    
     // EDIT
     const editForm = document.getElementById("editForm");
     if (editForm) {
