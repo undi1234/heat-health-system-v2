@@ -16,6 +16,18 @@
     </div>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                {% for category, message in messages %}
+                    showSuccess("{{ message }}", "{{ category }}");
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
+{% endwith %}
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -78,7 +90,7 @@
                     </select>
 
                     <label>Symptoms</label>
-                    <input type="text" name="symptoms" required>
+                    <input type="text" name="symptoms" required pattern="[A-Za-z ,.-]{5,}" title="Enter valid symptoms (min 5 letters)">
 
                     <label>Status</label>
                     <select name="status">
@@ -91,7 +103,8 @@
                     <input type="date" name="date" max="{{ today }}" value="{{ today }}" required>
 
                     <label>Handled By</label>
-                    <input type="text" name="handled_by" value="{{ username }}" readonly>
+                    <input type="hidden" name="handled_by" value="{{ session['user_id'] }}">
+                    <input type="text" value="{{ username }}" readonly>
 
                     <button type="submit" class="submit-btn">Add Case</button>
 
@@ -247,7 +260,8 @@
         <form id="editForm" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <input type="hidden" name="id" id="case_id">
+            <label>Select Case</label>
+            <select id="case_id" name="id" onchange="onCaseChange()"></select>
 
             <!-- Resident -->
             <label>Resident</label>
@@ -268,7 +282,7 @@
 
             <!-- Date -->
             <label>Date</label>
-            <input type="date" name="date" id="date" required>
+            <input type="date" name="date" id="date" max="{{ today }}" required>
 
             <!-- Handled By Health Worker -->
             <label>Handled By</label>
@@ -320,6 +334,8 @@
     </div>
 </div>
 
+<!-- ONLY SHOWING FIXED SCRIPT PART (no need to change your HTML above) -->
+
 <script>
 function showSuccess(message, type = "success") {
     const modal = document.getElementById("successModal");
@@ -327,8 +343,6 @@ function showSuccess(message, type = "success") {
     const text = document.getElementById("successText");
 
     text.textContent = message;
-
-    // remove old state
     box.classList.remove("error");
 
     if (type === "error") {
@@ -342,15 +356,6 @@ function showSuccess(message, type = "success") {
     }, 1500);
 }
 
-// ✅ SHOW AFTER RELOAD
-window.addEventListener("DOMContentLoaded", () => {
-    const message = localStorage.getItem("successMessage");
-    if (message) {
-        showSuccess(message);
-        localStorage.removeItem("successMessage");
-    }
-});
-
 document.addEventListener("DOMContentLoaded", () => {
 
     // SHOW SUCCESS
@@ -358,14 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (message) {
         showSuccess(message);
         localStorage.removeItem("successMessage");
-    }
-
-    // ADD
-    const addForm = document.querySelector("#addCaseModal form");
-    if (addForm) {
-        addForm.addEventListener("submit", () => {
-            localStorage.setItem("successMessage", "Case added successfully!");
-        });
     }
 
     // EDIT
@@ -389,18 +386,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 function openDeleteModal(id, name, type) {
-    if (!id) {
-        console.error("Invalid ID for delete");
-        return;
-    }
+    if (!id) return;
 
     const form = document.getElementById("deleteForm");
     const message = document.getElementById("deleteMessage");
-
-    if (type === "temperature") {
-        form.action = "/delete_temperature/" + id;
-        message.innerHTML = `Are you sure you want to delete Temperature ID <strong>${name}</strong>?`;
-    }
 
     if (type === "illness") {
         form.action = "/delete_case/" + id;
@@ -415,22 +404,13 @@ function closeDeleteModal() {
 }
 
 function handleEditClick(btn) {
-    const id = btn.dataset.id;
     const name = btn.dataset.name;
-    const symptoms = btn.dataset.symptoms;
-    const status = btn.dataset.status;
-    const handled_by = btn.dataset.worker;
-    const date = btn.dataset.date;
     const allCases = JSON.parse(btn.dataset.allcases || "[]");
-
-    openEditModal(id, name, symptoms, status, handled_by, date, allCases);
+    showCases(allCases, name);
 }
 
 function handleDeleteClick(btn) {
-    const id = btn.dataset.id;
-    const name = btn.dataset.name;
-
-    openDeleteModal(id, name, 'illness');
+    openDeleteModal(btn.dataset.id, btn.dataset.name, 'illness');
 }
 
 function showCases(cases, name) {
@@ -438,83 +418,81 @@ function showCases(cases, name) {
     const list = document.getElementById("casesList");
     const title = document.getElementById("casesTitle");
 
-    title.textContent = "Symptoms of " + name;
+    title.textContent = "Cases of " + name;
     list.innerHTML = "";
 
     if (!cases || cases.length === 0) {
-        list.innerHTML = "<li>No symptoms found</li>";
+        list.innerHTML = "<li>No cases found</li>";
     } else {
         cases.forEach(c => {
             list.innerHTML += `
-                <li>
+                <li class="case-item">
                     <strong>${c.symptoms}</strong><br>
-                    <small>${c.date}</small><br>
-                    <button onclick="openEditModal(
-                        ${c.id},
-                        '${name}',
-                        '${c.symptoms}',
-                        '',
-                        '',
-                        '${c.date}',
-                        ${JSON.stringify(cases)}
-                    )">
-                        Edit
-                    </button>
+                    <small>${c.date}</small>
                 </li>
             `;
         });
     }
 
+    list.innerHTML += `
+        <li style="margin-top:10px;">
+            <button onclick='openEditModalFromCases(${JSON.stringify(name)}, ${JSON.stringify(cases)})'>
+                Edit Cases
+            </button>
+        </li>
+    `;
+
     modal.style.display = "flex";
 }
 
-function handleCaseClick(element, cases, name) {
-    // remove active from all
-    document.querySelectorAll(".case-link").forEach(el => {
-        el.classList.remove("active");
-    });
+let currentCases = [];
 
-    // add active to clicked
-    element.classList.add("active");
+function openEditModalFromCases(name, cases) {
+    currentCases = cases;
 
-    showCases(cases, name);
-}
-
-function closeCasesModal() {
     document.getElementById("casesModal").style.display = "none";
-}
-
-window.onclick = function(event) {
-    const modals = ["deleteModal", "editModal", "casesModal", "addCaseModal"];
-
-    modals.forEach(id => {
-        const modal = document.getElementById(id);
-        if (event.target === modal) {
-            modal.style.display = "none";
-        }
-    });
-};
-
-function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
-
     document.getElementById("editModal").style.display = "flex";
 
-    document.getElementById("case_id").value = id || "";
-    document.getElementById("resident_name").value = name || "";
-    document.getElementById("symptoms").value = symptoms || "";
-    document.getElementById("status").value = status || "Reported";
-    document.getElementById("date").value = date || "";
-    document.getElementById("handled_by").value = handled_by ? String(handled_by) : "";
+    document.getElementById("resident_name").value = name;
 
-    document.getElementById("editForm").action = "/edit_case/" + id;
+    const select = document.getElementById("case_id");
+    select.innerHTML = "";
+
+    cases.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.id;
+        option.textContent = `${c.symptoms} (${c.date})`;
+        select.appendChild(option);
+    });
+
+    if (cases.length > 0) {
+        select.value = cases[0].id;
+        loadCaseData(cases[0], cases);
+    }
+}
+
+function onCaseChange() {
+    const id = document.getElementById("case_id").value;
+    const selected = currentCases.find(c => c.id == id);
+    if (selected) {
+        loadCaseData(selected, currentCases);
+    }
+}
+
+function loadCaseData(caseData, allCases) {
+    document.getElementById("case_id").value = caseData.id;
+    document.getElementById("symptoms").value = caseData.symptoms;
+    document.getElementById("status").value = caseData.status;
+    document.getElementById("date").value = caseData.date;
+    document.getElementById("handled_by").value = caseData.worker_id ? String(caseData.worker_id) : "";
+
+    document.getElementById("editForm").action = "/edit_case/" + caseData.id;
 
     const datalist = document.getElementById("symptomOptions");
     datalist.innerHTML = "";
 
     const uniqueSymptoms = [...new Set(
-        allCases
-            .map(c => c.symptoms)
-            .filter(s => s && s.trim() !== "")
+        allCases.map(c => c.symptoms).filter(s => s)
     )];
 
     uniqueSymptoms.forEach(symptom => {
@@ -522,18 +500,33 @@ function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
         option.value = symptom;
         datalist.appendChild(option);
     });
-    
+}
 
-    // ✅ Auto focus
-    setTimeout(() => {
-        document.getElementById("symptoms").focus(); 
-    }, 100);    
+function handleCaseClick(element, cases, name) {
+    document.querySelectorAll(".case-link").forEach(el => {
+        el.classList.remove("active");
+    });
+
+    element.classList.add("active");
+    showCases(cases, name);
+}
+
+function closeCasesModal() {
+    document.getElementById("casesModal").style.display = "none";
 }
 
 function closeModal() {
     document.getElementById("editModal").style.display = "none";
 }
 
+window.onclick = function(event) {
+    ["deleteModal", "editModal", "casesModal", "addCaseModal"].forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+};
 </script>
 
 {% include 'logout_modal.html' %}

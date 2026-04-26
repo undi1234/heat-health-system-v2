@@ -208,24 +208,6 @@ function refreshData() {
     location.reload();
 }
 
-function startAutoTemp() {
-    fetch('/start_auto_temp', { method: 'POST' })
-    .then(res => res.json())
-    .then(data => {
-        document.querySelector(".start").disabled = true;
-        document.querySelector(".stop").disabled = false;
-    });
-}
-
-function stopAutoTemp() {
-    fetch('/stop_auto_temp', { method: 'POST' })
-    .then(res => res.json())
-    .then(data => {
-        document.querySelector(".start").disabled = false;
-        document.querySelector(".stop").disabled = true;
-    });
-}
-
 // AUTO REFRESH EVERY 5 MINUTES
 setInterval(refreshData, 300000);
 </script>

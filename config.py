@@ -26,9 +26,8 @@ class ProductionConfig(Config):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
     elif DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
         DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
-    
-    if DATABASE_URL:
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or "sqlite:///production.db"
 
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,

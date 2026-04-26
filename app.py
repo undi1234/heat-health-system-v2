@@ -265,6 +265,8 @@ def check_contact():
     contact = re.sub(r"[^\d+]", "", contact)
 
     user = User.query.filter_by(username=session.get('user')).first()
+    if not user:
+        return jsonify({"exists": False})
 
     # 🔥 IMPORTANT: exclude current user’s own contact
     resident = Resident.query.filter(
@@ -277,7 +279,7 @@ def check_contact():
         HealthWorker.user_id != user.id
     ).first()
 
-    return {"exists": bool(resident or worker)}
+    return jsonify({"exists": bool(resident or worker)})
 
 
 # =========================
@@ -531,7 +533,7 @@ def api_temperature():
     data = Temperature.query.order_by(Temperature.id.desc()).all()
     return jsonify([{
         "value": t.value,
-        "date": t.date,
+        "date": t.date.isoformat() if t.date else None,
         "time": t.time
     } for t in data])
 
@@ -699,26 +701,6 @@ def start_auto_temp():
     return jsonify({"status": "running"})
 
 # =========================
-# STOP AUTO FETCH
-# =========================
-@app.route('/stop_auto_temp', methods=['POST'])
-def stop_auto_temp():
-    if 'user' not in session or session.get('role') != "HealthWorker":
-        return jsonify({"error": "Unauthorized"}), 403
-    
-    global job, auto_running, scheduler
-
-    if scheduler and job:
-        scheduler.remove_job(job.id)
-        job = None
-        auto_running = False
-        app.logger.info("⛔ Auto fetch manually stopped")
-        print("⛔ Auto fetch STOPPED (manual)")
-
-    return jsonify({"status": "stopped"})
-
-    
-# =========================
 # DELETE TEMPERATURE
 # =========================
 @app.route('/delete_temperature/<int:id>', methods=['POST'])
@@ -811,7 +793,7 @@ def api_heat_index():
         "temperature": h.temperature,
         "heat_index": h.heat_index,
         "status": h.status,
-        "date": h.date
+        "date": h.date.isoformat() if h.date else None
     } for h in data])
 
 
@@ -863,7 +845,7 @@ def api_illness():
         "resident": i.resident.name if i.resident else None,
         "symptoms": i.symptoms,
         "status": i.status,
-        "date": i.date,
+        "date": i.date.isoformat() if i.date else None,
         "handled_by": i.healthworker.name if i.healthworker else None
     } for i in data])
 
@@ -1027,7 +1009,8 @@ def add_case():
     if not user_id:
         return redirect('/')
 
-    worker = HealthWorker.query.filter_by(user_id=user_id).first()
+    worker_id = request.form.get('handled_by')
+    worker = HealthWorker.query.get(worker_id)
 
     if not worker:
         flash("Health worker not found!", "error")
@@ -1048,8 +1031,8 @@ def add_case():
     symptoms = data.get('symptoms', '').strip()
     case_date = data.get('date')
 
-    if not symptoms or len(symptoms) < 5:
-        flash("Please enter valid symptoms for the illness case.", "error")
+    if not re.match(r"^[A-Za-z ,.-]{5,}$", symptoms):
+        flash("Enter valid symptoms (letters only, min 5 chars).", "error")
         return redirect(url_for('healthworker.illness_records'))
 
     if not case_date:
@@ -1194,10 +1177,9 @@ def security_middleware():
         'auth.register',
         'auth.register_page',
         'auth.check_username',
-        'auth.check_contact',
+        'auth.suggest_usernames',
         'static',
-        'sensor_data',  
-        'check_username' 
+        'sensor_data'
     ]
 
     # =========================

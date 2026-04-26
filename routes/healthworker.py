@@ -303,9 +303,11 @@ def illness_records():
         summary['statuses'].add(case.status)
         summary['symptoms'].add(case.symptoms)
         summary['all_cases'].append({
-            "id": case.id,
+            "id": case.id,  # ✅ REQUIRED
             "symptoms": case.symptoms,
-            "date": case.date.strftime("%Y-%m-%d") if case.date else "No date"
+            "status": case.status, 
+            "date": case.date.strftime("%Y-%m-%d") if case.date else "No date",
+            "worker_id": case.healthworker.id if case.healthworker else ""
         })
 
         if case.healthworker and case.healthworker.name:
