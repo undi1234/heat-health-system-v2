@@ -75,6 +75,14 @@
             🌐 Manual Fetch
         </button>
         </form>
+
+        <!-- MANUAL AUTO FETCH BUTTON -->
+        <form action="/manual_auto_fetch" method="POST" class="temp-form" style="margin-top: 10px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" onclick="this.innerText='Fetching...'">
+                🔄 Auto Fetch Now
+            </button>
+        </form>
         {% endif %}
 
         <div class="table-container">

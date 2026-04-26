@@ -561,13 +561,12 @@ def add_temperature():
         flash("Failed to get temperature. Check city name.", "error")
         return redirect(url_for('temperature_records'))
 
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    current_time = datetime.now().strftime("%I:%M:%S %p")
+    current_datetime = datetime.now()
 
     new_temp = Temperature(
         value=temp_value,
-        date=current_date,
-        time=current_time,
+        date=current_datetime,
+        time=current_datetime.strftime("%I:%M:%S %p"),
         barangay=barangay   # ✅ AUTO
     )
     db.session.add(new_temp)
@@ -579,7 +578,7 @@ def add_temperature():
         temperature=temp_value,
         heat_index=round(heat_index_value, 2),
         status=status,
-        date=current_date,
+        date=current_datetime,
         temperature_id=new_temp.id
     )
 
@@ -605,16 +604,25 @@ def auto_fetch_temperature():
                 app.logger.warning(f"Failed to fetch temperature for {city}")
                 return
 
-            barangays = ["Danahao"]
+            # Save for all barangays in Danahao
+            barangays = [
+                "Danahao",
+                "P1 Manggahan", 
+                "P2 Cocoahill",
+                "P3 Maligaya", 
+                "P4 Camarin",
+                "P5 Riverside",
+                "P6 Buntod",
+                "P7 Tuog"
+            ]
 
-            current_date = datetime.now().strftime("%Y-%m-%d")
-            current_time = datetime.now().strftime("%I:%M:%S %p")
+            current_datetime = datetime.now()
 
             for brgy in barangays:
                 new_temp = Temperature(
                     value=temp_value,
-                    date=current_date,
-                    time=current_time,
+                    date=current_datetime,
+                    time=current_datetime.strftime("%I:%M:%S %p"),
                     barangay=brgy   
                 )
                 db.session.add(new_temp)
@@ -626,7 +634,7 @@ def auto_fetch_temperature():
                     temperature=temp_value,
                     heat_index=round(heat_index_value, 2),
                     status=status,
-                    date=current_date,
+                    date=current_datetime,
                     temperature_id=new_temp.id
                 )
 
@@ -634,7 +642,7 @@ def auto_fetch_temperature():
 
             db.session.commit()
 
-            app.logger.info("✅ Auto temperature saved for barangay")
+            app.logger.info("✅ Auto temperature saved for all barangays")
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Auto fetch failed: {e}")
@@ -699,6 +707,22 @@ def start_auto_temp():
         print("🟢 Auto fetch STARTED (manual)")
 
     return jsonify({"status": "running"})
+
+# =========================
+# MANUAL TRIGGER AUTO FETCH
+# =========================
+@app.route('/manual_auto_fetch', methods=['POST'])
+def manual_auto_fetch():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    try:
+        auto_fetch_temperature()
+        flash("Manual auto-fetch completed!", "success")
+    except Exception as e:
+        flash(f"Manual auto-fetch failed: {e}", "error")
+    
+    return redirect(url_for('temperature_records'))
 
 # =========================
 # DELETE TEMPERATURE

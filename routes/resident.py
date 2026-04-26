@@ -96,7 +96,11 @@ def resident_dashboard():
         return redirect(url_for('account'))
 
     if resident.address:
-        barangay = resident.address.split(" - ")[0]   # 🔥 FIX
+        # Extract purok from address like "Danahao - P1 Manggahan"
+        if " - " in resident.address:
+            barangay = resident.address.split(" - ")[1]  # Get the purok part
+        else:
+            barangay = resident.address
     else:
         barangay = None
 
