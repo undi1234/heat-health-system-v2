@@ -446,10 +446,20 @@ function showCases(cases, name) {
     } else {
         cases.forEach(c => {
             list.innerHTML += `
-                <li class="case-item">
-                    <strong>${c.symptoms}</strong>
-                    <br>
-                    <small>${c.date || 'No date'}</small>
+                <li>
+                    <strong>${c.symptoms}</strong><br>
+                    <small>${c.date}</small><br>
+                    <button onclick="openEditModal(
+                        ${c.id},
+                        '${name}',
+                        '${c.symptoms}',
+                        '',
+                        '',
+                        '${c.date}',
+                        ${JSON.stringify(cases)}
+                    )">
+                        Edit
+                    </button>
                 </li>
             `;
         });
@@ -512,6 +522,7 @@ function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
         option.value = symptom;
         datalist.appendChild(option);
     });
+    
 
     // ✅ Auto focus
     setTimeout(() => {

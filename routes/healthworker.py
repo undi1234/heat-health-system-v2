@@ -303,6 +303,7 @@ def illness_records():
         summary['statuses'].add(case.status)
         summary['symptoms'].add(case.symptoms)
         summary['all_cases'].append({
+            "id": case.id,
             "symptoms": case.symptoms,
             "date": case.date.strftime("%Y-%m-%d") if case.date else "No date"
         })
