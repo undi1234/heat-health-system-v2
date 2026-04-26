@@ -242,18 +242,96 @@ def add_resident():
 # =========================
 # ILLNESS RECORDS
 # =========================
+ALL_PUROKS = [
+    "P1 Manggahan",
+    "P2 Cocoahill",
+    "P3 Maligaya",
+    "P4 Camarin",
+    "P5 Riverside",
+    "P6 Buntod",
+    "P7 Tuog"
+]
+
+
+def _extract_purok(address):
+    if not address:
+        return "Unknown"
+    return address.split(" - ")[-1].strip() or "Unknown"
+
+
 @healthworker_bp.route('/illness_records')
 def illness_records():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return redirect(url_for('auth.home'))
 
-    records = Illness.query.order_by(Illness.id.desc()).all()
-    workers = HealthWorker.query.all()
-    residents = Resident.query.order_by(Resident.name).all()
+    cases = Illness.query.order_by(Illness.date.desc(), Illness.id.desc()).all()
+    workers = HealthWorker.query.order_by(HealthWorker.name.asc()).all()
+    residents = Resident.query.order_by(Resident.name.asc()).all()
+
+    grouped_cases = {p: [] for p in ALL_PUROKS}
+    grouped_cases.setdefault('Unknown', [])
+
+    resident_summary = {}
+
+    for case in cases:
+        resident = case.resident
+        if not resident:
+            continue
+
+        resident_id = resident.id
+        if resident_id not in resident_summary:
+            resident_summary[resident_id] = {
+                'resident_id': resident_id,
+                'resident_name': resident.name,
+                'address': resident.address or 'Unknown',
+                'purok': _extract_purok(resident.address),
+                'case_count': 0,
+                'latest_date': case.date,
+                'latest_status': case.status,
+                'latest_symptoms': case.symptoms,
+                'latest_case_id': case.id,
+                'latest_healthworker_id': case.healthworker.id if case.healthworker else None,
+                'latest_healthworker_name': case.healthworker.name if case.healthworker else 'Pending',
+                'health_workers': set(),
+                'statuses': set(),
+                'symptoms': set(),
+            }
+
+        summary = resident_summary[resident_id]
+        summary['case_count'] += 1
+        summary['statuses'].add(case.status)
+        summary['symptoms'].add(case.symptoms)
+
+        if case.healthworker and case.healthworker.name:
+            summary['health_workers'].add(case.healthworker.name)
+        else:
+            summary['health_workers'].add('Pending')
+
+        if case.date and case.date > summary['latest_date']:
+            summary['latest_date'] = case.date
+            summary['latest_status'] = case.status
+            summary['latest_symptoms'] = case.symptoms
+            summary['latest_case_id'] = case.id
+            summary['latest_healthworker_id'] = case.healthworker.id if case.healthworker else None
+            summary['latest_healthworker_name'] = case.healthworker.name if case.healthworker else 'Pending'
+
+    for summary in resident_summary.values():
+        summary['health_workers'] = ', '.join(sorted(summary['health_workers']))
+        summary['status_summary'] = ', '.join(sorted(summary['statuses']))
+        summary['symptoms_summary'] = '; '.join(sorted(summary['symptoms']))
+
+        purok = summary['purok']
+        if purok not in grouped_cases:
+            grouped_cases['Unknown'].append(summary)
+        else:
+            grouped_cases[purok].append(summary)
+
+    for purok in grouped_cases:
+        grouped_cases[purok].sort(key=lambda item: item['resident_name'])
 
     return render_template(
         'illness_records.html',
-        records=records,
+        grouped_cases=grouped_cases,
         workers=workers,
         residents=residents,
         today=datetime.utcnow().date()

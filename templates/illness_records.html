@@ -111,7 +111,7 @@
         </script>
 
         <!-- SEARCH -->
-        <input type="text" id="searchInput" placeholder="Search Illness..." class="search" onkeyup="searchTable()">
+        <input type="text" id="searchInput" placeholder="Search illness cases..." class="search">
 
         <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -120,23 +120,30 @@
 
             searchInput.addEventListener("keyup", function () {
                 const filter = this.value.toLowerCase();
-                const rows = document.querySelectorAll("#dataTable tbody tr"); // ✅ moved inside
+                const sections = document.querySelectorAll(".purok-section");
 
-                let visibleCount = 0;
+                let totalVisible = 0;
 
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
+                sections.forEach(section => {
+                    const rows = section.querySelectorAll("tbody tr");
+                    let visibleCount = 0;
 
-                    if (text.includes(filter)) {
-                        row.style.display = "";
-                        visibleCount++;
-                    } else {
-                        row.style.display = "none";
-                    }
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+
+                        if (text.includes(filter)) {
+                            row.style.display = "";
+                            visibleCount++;
+                            totalVisible++;
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+
+                    section.style.display = visibleCount > 0 ? "" : "none";
                 });
 
-                // ✅ FIX: also check if table is empty
-                if (visibleCount === 0) {
+                if (totalVisible === 0) {
                     noDataMessage.style.display = "block";
                 } else {
                     noDataMessage.style.display = "none";
@@ -145,71 +152,69 @@
         });
         </script>
 
-        <div class="table-container">
-        <!-- TABLE -->
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Illness ID</th>
-                    <th>Resident</th>
-                    <th>Symptoms</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th>Handled By</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+        {% for purok, residents in grouped_cases.items() %}
+            <div class="purok-section">
+                <div class="purok-header">
+                    <h3>{{ purok }}</h3>
+                    <span class="purok-count">Residents: {{ residents|length }}</span>
+                </div>
 
-            <tbody>
-                {% for case in records %}
-                <tr>
-                    <td>IL{{ "%03d"|format(case.id) }}</td>
-                    <td>{{ case.resident.name }}</td>
-                    <td>{{ case.symptoms }}</td>
-
-                    <td>
-                        {% if case.status == "Recovered" %}
-                            <span class="recovered">{{ case.status }}</span>
-                        {% elif case.status == "Under Treatment" %}
-                            <span class="treatment">{{ case.status }}</span>
-                        {% else %}
-                            <span class="reported">{{ case.status }}</span>
-                        {% endif %}
-                    </td>
-
-                    <td>{{ case.date }}</td>
-                    <td>{{ case.healthworker.name if case.healthworker else 'Pending' }}</td>
-
-                    <td>
-                        <!-- EDIT -->
-                        <button class="edit"
-                        onclick='openEditModal(
-                            {{ case.id }},
-                            {{ case.resident.name | tojson if case.resident else "Unknown" }},
-                            {{ case.symptoms | tojson }},
-                            {{ case.status | tojson }},
-                            {{ case.healthworker.id if case.healthworker else "" }}
-                        )'>✏️</button>
-
-                        <!-- DELETE -->
-                        <button class="delete"
-                        onclick='openDeleteModal(
-                            {{ case.id }},
-                            {{ case.resident.name | tojson if case.resident else "Unknown" }},
-                            "illness"
-                        )'>
-                        🗑️
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Resident</th>
+                                <th>Cases</th>
+                                <th>Latest Status</th>
+                                <th>Handled By</th>
+                                <th>Latest Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if residents %}
+                                {% for row in residents %}
+                                <tr>
+                                    <td>{{ row.resident_name }}</td>
+                                    <td>{{ row.case_count }}</td>
+                                    <td>
+                                        {% if row.latest_status == "Recovered" %}
+                                            <span class="recovered">{{ row.latest_status }}</span>
+                                        {% elif row.latest_status == "Under Treatment" %}
+                                            <span class="treatment">{{ row.latest_status }}</span>
+                                        {% else %}
+                                            <span class="reported">{{ row.latest_status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ row.health_workers }}</td>
+                                    <td>{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else 'N/A' }}</td>
+                                    <td>
+                                        <button class="edit" onclick="openEditModal(
+                                            {{ row.latest_case_id }},
+                                            {{ row.resident_name | tojson }},
+                                            {{ row.latest_symptoms | tojson }},
+                                            {{ row.latest_status | tojson }},
+                                            {{ row.latest_healthworker_id | tojson }}
+                                        )">Edit</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" style="text-align:center; color:gray;">
+                                        No illness cases found for this purok.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
 
         <p id="noDataMessage" style="display:none; text-align:center; margin-top:10px; color:red;">
             No illness records found
-        </p> 
+        </p>
 
     </div>
 
