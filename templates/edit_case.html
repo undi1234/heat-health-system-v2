@@ -19,7 +19,7 @@
 
             <p><strong>Resident:</strong> {{ case.resident_name }}</p>
             <p><strong>Symptoms:</strong> {{ case.symptoms }}</p>
-            <p><strong>Date:</strong> {{ case.date }}</p>
+            <p><strong>Date:</strong> {{ case.date.strftime('%Y-%m-%d') if case.date else '' }}</p>
 
             <label>Status:</label>
             <select name="status" required>

@@ -97,7 +97,7 @@
                     <tr>
                         <td>T{{ "%03d"|format(t.id) }}</td>
                         <td><strong>{{ t.value }}°C</strong></td>
-                        <td>{{ t.date }}</td>
+                        <td>{{ t.date.strftime('%Y-%m-%d') if t.date else '' }}</td>
                         <td>{{ t.time }}</td>
                         <td>{{ t.barangay }}</td> 
                         <td>

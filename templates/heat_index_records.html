@@ -93,7 +93,7 @@
                         </span>
                     </td>
 
-                    <td>{{ h.date }}</td>
+                    <td>{{ h.date.strftime('%Y-%m-%d') if h.date else '' }}</td>
                 </tr>
                 {% endfor %}
             {% else %}

@@ -70,7 +70,7 @@
                                 {{ case.status }}
                             </span>
                         </td>
-                        <td>{{ case.date }}</td>
+                        <td>{{ case.date.strftime('%Y-%m-%d') if case.date else '' }}</td>
                         <td>{{ case.healthworker.name if case.healthworker else 'Pending' }}</td>
                     </tr>
                     {% endfor %}

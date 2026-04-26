@@ -245,7 +245,7 @@ canvas { margin-top:30px; }
 {% if heat_trends %}
     {% for h in heat_trends %}
         <div class="list-item">
-            <span>{{ h.date }}</span>
+            <span>{{ h.date.strftime('%Y-%m-%d') if h.date else '' }}</span>
             <span>{{ h.heat_index }} °C</span>
         </div>
     {% endfor %}

@@ -194,8 +194,13 @@
                                             {{ row.resident_name | tojson }},
                                             {{ row.latest_symptoms | tojson }},
                                             {{ row.latest_status | tojson }},
-                                            {{ row.latest_healthworker_id | tojson }}
+                                            {{ row.latest_healthworker_id | default('') | tojson }}
                                         )">Edit</button>
+                                        <button class="delete" onclick="openDeleteModal(
+                                            {{ row.latest_case_id }},
+                                            {{ row.resident_name | tojson }},
+                                            'illness'
+                                        )">Delete</button>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -371,7 +376,7 @@ function openEditModal(id, name, symptoms, status, handled_by) {
     document.getElementById("resident_name").value = name;
     document.getElementById("symptoms").value = symptoms;
     document.getElementById("status").value = status;
-    document.getElementById("handled_by").value = handled_by;
+    document.getElementById("handled_by").value = handled_by || '';
 
     document.getElementById("editForm").action = "/edit_case/" + id;
 }

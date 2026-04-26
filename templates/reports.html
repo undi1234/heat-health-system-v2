@@ -81,7 +81,7 @@
                 
                 {% for heat in heat_trends %}
                 <div class="item">
-                    <span>{{ heat.date }} - {{ heat.temperature }}°C</span>
+                    <span>{{ heat.date.strftime('%Y-%m-%d') if heat.date else '' }} - {{ heat.temperature }}°C</span>
 
                         <span class="
                             {% if heat.status == 'Extreme Danger' %}level-extreme-danger-bg

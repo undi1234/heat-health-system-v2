@@ -208,7 +208,7 @@
 
             <div class="info">
                 <span>Date</span>
-                <div>{{ record.date }}</div>
+                <div>{{ record.date.strftime('%Y-%m-%d') if record.date else '' }}</div>
             </div>
 
             <div class="info">
