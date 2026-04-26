@@ -201,6 +201,7 @@
                                             data-status="{{ row.latest_status }}"
                                             data-worker="{{ row.latest_healthworker_id }}"
                                             data-date="{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else '' }}"
+                                            data-allcases='{{ row.all_cases | tojson }}'
                                             onclick="handleEditClick(this)">
                                             Edit
                                         </button>
@@ -253,8 +254,18 @@
             <input type="text" id="resident_name" readonly>
 
             <!-- Symptoms -->
+            <label>Select Previous Symptoms (<span id="symptomCount">0</span>)</label>
+            <select id="symptoms_select" onchange="fillSymptoms(this)">
+                <option value="">-- Choose from previous records --</option>
+            </select>
+
+            <small style="color:gray; display:block; margin:5px 0;">
+                or type a new symptom below
+            </small>
+
             <label>Symptoms</label>
-            <input type="text" name="symptoms" id="symptoms" required>
+            <input type="text" name="symptoms" id="symptoms" 
+                placeholder="e.g. headache, dizziness..." required>
 
             <!-- Status -->
             <label>Status</label>
@@ -399,8 +410,9 @@ function handleEditClick(btn) {
     const status = btn.dataset.status;
     const handled_by = btn.dataset.worker;
     const date = btn.dataset.date;
+    const allCases = JSON.parse(btn.dataset.allcases || "[]");
 
-    openEditModal(id, name, symptoms, status, handled_by, date);
+    openEditModal(id, name, symptoms, status, handled_by, date, allCases);
 }
 
 function handleDeleteClick(btn) {
@@ -422,7 +434,13 @@ function showCases(cases, name) {
         list.innerHTML = "<li>No symptoms found</li>";
     } else {
         cases.forEach(c => {
-            list.innerHTML += `<li>${c.symptoms}</li>`;
+            list.innerHTML += `
+                <li class="case-item">
+                    <strong>${c.symptoms}</strong>
+                    <br>
+                    <small>${c.date}</small>
+                </li>
+            `;
         });
     }
 
@@ -456,23 +474,49 @@ window.onclick = function(event) {
     }
 }
 
-function openEditModal(id, name, symptoms, status, handled_by, date) {
-    try {
-        document.getElementById("editModal").style.display = "flex";
+function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
 
-        document.getElementById("case_id").value = id || "";
-        document.getElementById("resident_name").value = name || "";
-        document.getElementById("symptoms").value = symptoms || "";
-        document.getElementById("status").value = status || "Reported";
-        document.getElementById("date").value = date || "";
-        document.getElementById("handled_by").value = handled_by ? String(handled_by) : "";
+    document.getElementById("editModal").style.display = "flex";
 
-        document.getElementById("editForm").action = "/edit_case/" + id;
+    document.getElementById("case_id").value = id || "";
+    document.getElementById("resident_name").value = name || "";
+    document.getElementById("symptoms").value = symptoms || "";
+    document.getElementById("status").value = status || "Reported";
+    document.getElementById("date").value = date || "";
+    document.getElementById("handled_by").value = handled_by ? String(handled_by) : "";
 
-    } catch (error) {
-        console.error("Edit modal error:", error);
+    document.getElementById("editForm").action = "/edit_case/" + id;
+
+    // 🔥 GET UNIQUE SYMPTOMS FIRST (FIXED ORDER)
+    const uniqueSymptoms = [...new Set(allCases.map(c => c.symptoms))];
+
+    // ✅ Update count
+    document.getElementById("symptomCount").textContent = uniqueSymptoms.length;
+
+    // 🔥 LOAD DROPDOWN
+    const select = document.getElementById("symptoms_select");
+    select.innerHTML = '<option value="">-- Choose from previous records --</option>';
+
+    uniqueSymptoms.forEach(symptom => {
+        const selected = symptom === symptoms ? "selected" : "";
+        select.innerHTML += `<option value="${symptom}" ${selected}>${symptom}</option>`;
+    });
+
+    // ✅ Auto focus
+    setTimeout(() => {
+        document.getElementById("symptoms").focus(); 
+    }, 100);    
+}
+
+function fillSymptoms(select) {
+    if (select.value) {
+        document.getElementById("symptoms").value = select.value;
     }
 }
+
+document.getElementById("symptoms").addEventListener("input", function() {
+    document.getElementById("symptoms_select").value = "";
+});
 
 function closeModal() {
     document.getElementById("editModal").style.display = "none";

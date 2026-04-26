@@ -245,6 +245,19 @@ h1 {
 }
 
 /* ================= BUTTONS ================= */
+.case-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #f5f7fa;
+    border-left: 5px solid #ff9800;
+}
+
+.case-item small {
+    color: #666;
+    font-size: 12px;
+}
+
 .case-link {
     color: #2563eb;
     cursor: pointer;
@@ -292,6 +305,13 @@ h1 {
     background: #e0ecff;
 }
 
+#symptoms_select {
+    margin-bottom: 8px;
+}
+
+small {
+    font-size: 12px;
+}
 
 /* ================= BUTTON BASE ================= */
 .btn {
