@@ -194,7 +194,8 @@
                                             {{ row.resident_name | tojson }},
                                             {{ row.latest_symptoms | tojson }},
                                             {{ row.latest_status | tojson }},
-                                            {{ row.latest_healthworker_id | default('') | tojson }}
+                                            {{ row.latest_healthworker_id | default('') | tojson }},
+                                            {{ row.latest_date.strftime('%Y-%m-%d') | tojson if row.latest_date else '\"\"' }}
                                         )">Edit</button>
                                         <button class="delete" onclick="openDeleteModal(
                                             {{ row.latest_case_id }},
@@ -231,7 +232,8 @@
 
         <span class="close" onclick="closeModal()">&times;</span>
 
-        <h3>Update Case Status</h3>
+        <h3>Edit Illness Case</h3>
+        <p class="subtitle">Update illness case details</p>
 
         <form id="editForm" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -254,6 +256,10 @@
                 <option value="Recovered">Recovered</option>
             </select>
 
+            <!-- Date -->
+            <label>Date</label>
+            <input type="date" name="date" id="date" required>
+
             <!-- Handled By Health Worker -->
             <label>Handled By</label>
             <select name="handled_by" id="handled_by">
@@ -262,7 +268,7 @@
                 {% endfor %}
             </select>
 
-            <button type="submit" class="submit-btn">Update Status</button>
+            <button type="submit" class="submit-btn">Update Case</button>
 
         </form>
 
@@ -369,13 +375,14 @@ window.onclick = function(event) {
     }
 }
 
-function openEditModal(id, name, symptoms, status, handled_by) {
+function openEditModal(id, name, symptoms, status, handled_by, date) {
     document.getElementById("editModal").style.display = "flex";
 
     document.getElementById("case_id").value = id;
     document.getElementById("resident_name").value = name;
     document.getElementById("symptoms").value = symptoms;
     document.getElementById("status").value = status;
+    document.getElementById("date").value = date;
     document.getElementById("handled_by").value = handled_by || '';
 
     document.getElementById("editForm").action = "/edit_case/" + id;

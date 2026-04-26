@@ -1103,6 +1103,15 @@ def edit_case(id):
     if worker_id:
         case.healthworker_id = int(worker_id)
 
+    # 🔥 UPDATE DATE
+    case_date = request.form.get('date')
+    if case_date:
+        try:
+            case.date = datetime.strptime(case_date, "%Y-%m-%d").date()
+        except ValueError:
+            flash("Invalid date format.", "error")
+            return redirect(url_for('healthworker.illness_records'))
+
     db.session.commit()
 
     flash("Case updated successfully!", "success")
