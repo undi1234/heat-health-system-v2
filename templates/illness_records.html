@@ -192,7 +192,7 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ row.health_workers }}</td>
-                                    <td>{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else '' | tojson }}</td>
+                                    <td>{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else '' }}</td>
                                     <td>
                                         <button class="edit"
                                             data-id="{{ row.latest_case_id or 0 }}"
@@ -256,7 +256,7 @@
             <!-- Symptoms -->
             <label>Select Previous Symptoms (<span id="symptomCount">0</span>)</label>
             <select id="symptoms_select" onchange="fillSymptoms(this)">
-                <option value="">-- Choose from previous records --</option>
+                <option value="">-- Select previous symptom --</option>
             </select>
 
             <small style="color:gray; display:block; margin:5px 0;">
@@ -360,19 +360,47 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ✅ ADD CASE
-document.querySelector("#addCaseModal form").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Case added successfully!");
-});
+document.addEventListener("DOMContentLoaded", () => {
 
-// ✅ UPDATE CASE
-document.getElementById("editForm").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Case updated successfully!");
-});
+    // SHOW SUCCESS
+    const message = localStorage.getItem("successMessage");
+    if (message) {
+        showSuccess(message);
+        localStorage.removeItem("successMessage");
+    }
 
-// ✅ DELETE CASE
-document.getElementById("deleteForm").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Case deleted successfully!");
+    // ADD
+    const addForm = document.querySelector("#addCaseModal form");
+    if (addForm) {
+        addForm.addEventListener("submit", () => {
+            localStorage.setItem("successMessage", "Case added successfully!");
+        });
+    }
+
+    // EDIT
+    const editForm = document.getElementById("editForm");
+    if (editForm) {
+        editForm.addEventListener("submit", () => {
+            localStorage.setItem("successMessage", "Case updated successfully!");
+        });
+    }
+
+    // DELETE
+    const deleteForm = document.getElementById("deleteForm");
+    if (deleteForm) {
+        deleteForm.addEventListener("submit", () => {
+            localStorage.setItem("successMessage", "Case deleted successfully!");
+        });
+    }
+
+    // SYMPTOM INPUT RESET
+    const symptomInput = document.getElementById("symptoms");
+    if (symptomInput) {
+        symptomInput.addEventListener("input", function() {
+            document.getElementById("symptoms_select").value = "";
+        });
+    }
+
 });
 </script>
 
@@ -463,16 +491,16 @@ function closeCasesModal() {
     document.getElementById("casesModal").style.display = "none";
 }
 
-function closeCasesModal() {
-    document.getElementById("casesModal").style.display = "none";
-}
-
 window.onclick = function(event) {
-    const modal = document.getElementById("deleteModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
+    const modals = ["deleteModal", "editModal", "casesModal", "addCaseModal"];
+
+    modals.forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+};
 
 function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
 
@@ -488,18 +516,29 @@ function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
     document.getElementById("editForm").action = "/edit_case/" + id;
 
     // 🔥 GET UNIQUE SYMPTOMS FIRST (FIXED ORDER)
-    const uniqueSymptoms = [...new Set(allCases.map(c => c.symptoms))];
+const uniqueSymptoms = [...new Set(
+    allCases
+        .map(c => c.symptoms)
+        .filter(s => s && s.trim() !== "")
+)];
 
     // ✅ Update count
     document.getElementById("symptomCount").textContent = uniqueSymptoms.length;
 
     // 🔥 LOAD DROPDOWN
     const select = document.getElementById("symptoms_select");
-    select.innerHTML = '<option value="">-- Choose from previous records --</option>';
+    select.innerHTML = '<option value="">-- Select previous symptom --</option>';
 
     uniqueSymptoms.forEach(symptom => {
-        const selected = symptom === symptoms ? "selected" : "";
-        select.innerHTML += `<option value="${symptom}" ${selected}>${symptom}</option>`;
+        const option = document.createElement("option");
+        option.value = symptom;
+        option.textContent = symptom;
+
+        if (symptom === symptoms) {
+            option.selected = true;
+        }
+
+        select.appendChild(option);
     });
 
     // ✅ Auto focus
@@ -511,12 +550,9 @@ function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
 function fillSymptoms(select) {
     if (select.value) {
         document.getElementById("symptoms").value = select.value;
+        select.blur(); // removes focus (clean UX)
     }
 }
-
-document.getElementById("symptoms").addEventListener("input", function() {
-    document.getElementById("symptoms_select").value = "";
-});
 
 function closeModal() {
     document.getElementById("editModal").style.display = "none";
