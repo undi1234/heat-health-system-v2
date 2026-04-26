@@ -22,16 +22,13 @@ class ProductionConfig(Config):
 
     DATABASE_URL = os.getenv("DATABASE_URL")
 
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL is not set!")
-
-    # Fix postgres prefix
-    if DATABASE_URL.startswith("postgres://"):
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
-    elif DATABASE_URL.startswith("postgresql://"):
+    elif DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
         DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
-
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    
+    if DATABASE_URL:
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
 
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,

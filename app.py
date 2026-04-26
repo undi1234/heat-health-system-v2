@@ -10,10 +10,16 @@ import re
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
+
 # =========================
-# LOAD ENV
+# LOAD ENV (Lazy - only load once)
 # =========================
-load_dotenv()
+_env_loaded = False
+def _ensure_env_loaded():
+    global _env_loaded
+    if not _env_loaded:
+        load_dotenv()
+        _env_loaded = True
 
 # =========================
 # SECURITY
@@ -42,6 +48,7 @@ app = Flask(__name__)
 csrf.init_app(app)
 
 # Load configuration from environment
+_ensure_env_loaded()
 from config import DevelopmentConfig, ProductionConfig
 app.config.from_object(
     ProductionConfig if os.getenv("FLASK_ENV") == "production" else DevelopmentConfig
@@ -53,26 +60,37 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 # =========================
-# DATABASE INITIALIZATION
+# DEFERRED DATABASE INITIALIZATION
 # =========================
+_db_initialized = False
+
 def init_db():
-    """Initialize database tables"""
+    """Initialize database tables (called on first request or explicitly)"""
+    global _db_initialized
+    if _db_initialized:
+        return
+    
     try:
         with app.app_context():
-            # Test database connection first
+            # Quick connection test
             with db.engine.connect() as conn:
                 conn.execute(db.text("SELECT 1"))
-                app.logger.info("Database connection successful")
-
+            app.logger.info("✅ Database connected")
+            
+            # Create tables if they don't exist
             db.create_all()
-            app.logger.info("Database tables created successfully")
+            app.logger.info("✅ Database tables ready")
+            _db_initialized = True
     except Exception as e:
-        app.logger.error(f"Database initialization failed: {e}")
-        # Don't crash the app if DB init fails - let it start and show error on first DB operation
-        pass
+        app.logger.error(f"❌ DB init error: {e}")
+        _db_initialized = False
 
-# Initialize database on startup
-init_db()
+# Initialize database on first request (not module import)
+@app.before_request
+def before_request():
+    """Ensure DB is initialized before first request"""
+    if not _db_initialized:
+        init_db()
 
 # Application factory support
 def create_app():
@@ -621,23 +639,64 @@ def auto_fetch_temperature():
 
 
 # =========================
-# SCHEDULER 
+# SCHEDULER (Auto-start after first request)
 # =========================
-scheduler = BackgroundScheduler()
+scheduler = None
 job = None
 auto_running = False
+_scheduler_initialized = False
 
-# ✅ START SCHEDULER (works in dev and production)
-try:
-    scheduler.start()
-    scheduler.add_job(
-        func=auto_fetch_temperature,
-        trigger="interval",
-        hours=1
-    )
-    print("🔥 Auto temperature fetch started (every 1 hour)")
-except Exception as e:
-    print(f"Scheduler already started or error: {e}")
+def init_scheduler():
+    """Initialize scheduler and register auto-fetch job"""
+    global scheduler, job, auto_running, _scheduler_initialized
+    
+    if _scheduler_initialized or scheduler is not None:
+        return
+    
+    try:
+        scheduler = BackgroundScheduler()
+        scheduler.start()
+        
+        # Register auto-fetch to run every 1 hour
+        job = scheduler.add_job(
+            func=auto_fetch_temperature,
+            trigger="interval",
+            hours=1,
+            id="auto_fetch_temp_job"
+        )
+        
+        auto_running = True
+        _scheduler_initialized = True
+        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every 1 hour")
+    except Exception as e:
+        app.logger.error(f"❌ Scheduler init error: {e}")
+
+# Auto-start scheduler on first request
+@app.before_request
+def auto_start_scheduler():
+    """Start scheduler automatically on first request"""
+    global scheduler
+    if scheduler is None:
+        init_scheduler()
+
+# ✅ Health worker can manually control auto-fetch
+@app.route('/start_auto_temp', methods=['POST'])
+def start_auto_temp():
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return jsonify({"error": "Unauthorized"}), 403
+    
+    global scheduler, auto_running
+    
+    # Ensure scheduler is initialized
+    if scheduler is None:
+        init_scheduler()
+    
+    if scheduler and not auto_running:
+        auto_running = True
+        app.logger.info("✅ Auto fetch manually enabled")
+        print("🟢 Auto fetch STARTED (manual)")
+
+    return jsonify({"status": "running"})
 
 # =========================
 # STOP AUTO FETCH
@@ -647,43 +706,16 @@ def stop_auto_temp():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return jsonify({"error": "Unauthorized"}), 403
     
-    global job, auto_running
+    global job, auto_running, scheduler
 
-    if job:
+    if scheduler and job:
         scheduler.remove_job(job.id)
         job = None
-
-    auto_running = False
-    print("⛔ Auto fetch STOPPED")
+        auto_running = False
+        app.logger.info("⛔ Auto fetch manually stopped")
+        print("⛔ Auto fetch STOPPED (manual)")
 
     return jsonify({"status": "stopped"})
-
-
-# =========================
-# START AUTO FETCH
-# =========================
-@app.route('/start_auto_temp', methods=['POST'])
-def start_auto_temp():
-    if 'user' not in session or session.get('role') != "HealthWorker":
-        return jsonify({"error": "Unauthorized"}), 403
-    
-    global job, auto_running
-
-    if not auto_running:
-        if not scheduler.running:
-            scheduler.start()
-
-        if job is None:
-            job = scheduler.add_job(
-                func=auto_fetch_temperature,
-                trigger="interval",
-                hours=1   # ✅ every 1 hour
-            )
-
-        auto_running = True
-        print("▶ Auto fetch STARTED")
-
-    return jsonify({"status": "started"})
 
     
 # =========================
