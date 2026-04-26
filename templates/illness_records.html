@@ -254,18 +254,9 @@
             <input type="text" id="resident_name" readonly>
 
             <!-- Symptoms -->
-            <label>Select Previous Symptoms (<span id="symptomCount">0</span>)</label>
-            <select id="symptoms_select" onchange="fillSymptoms(this)">
-                <option value="">-- Select previous symptom --</option>
-            </select>
-
-            <small style="color:gray; display:block; margin:5px 0;">
-                or type a new symptom below
-            </small>
-
             <label>Symptoms</label>
-            <input type="text" name="symptoms" id="symptoms" 
-                placeholder="e.g. headache, dizziness..." required>
+            <input type="text" name="symptoms" id="symptoms" list="symptomOptions" required>
+            <datalist id="symptomOptions"></datalist>
 
             <!-- Status -->
             <label>Status</label>
@@ -393,14 +384,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // SYMPTOM INPUT RESET
-    const symptomInput = document.getElementById("symptoms");
-    if (symptomInput) {
-        symptomInput.addEventListener("input", function() {
-            document.getElementById("symptoms_select").value = "";
-        });
-    }
-
 });
 </script>
 
@@ -466,7 +449,7 @@ function showCases(cases, name) {
                 <li class="case-item">
                     <strong>${c.symptoms}</strong>
                     <br>
-                    <small>${c.date}</small>
+                    <small>${c.date || 'No date'}</small>
                 </li>
             `;
         });
@@ -515,43 +498,25 @@ function openEditModal(id, name, symptoms, status, handled_by, date, allCases) {
 
     document.getElementById("editForm").action = "/edit_case/" + id;
 
-    // 🔥 GET UNIQUE SYMPTOMS FIRST (FIXED ORDER)
-const uniqueSymptoms = [...new Set(
-    allCases
-        .map(c => c.symptoms)
-        .filter(s => s && s.trim() !== "")
-)];
+    const datalist = document.getElementById("symptomOptions");
+    datalist.innerHTML = "";
 
-    // ✅ Update count
-    document.getElementById("symptomCount").textContent = uniqueSymptoms.length;
-
-    // 🔥 LOAD DROPDOWN
-    const select = document.getElementById("symptoms_select");
-    select.innerHTML = '<option value="">-- Select previous symptom --</option>';
+    const uniqueSymptoms = [...new Set(
+        allCases
+            .map(c => c.symptoms)
+            .filter(s => s && s.trim() !== "")
+    )];
 
     uniqueSymptoms.forEach(symptom => {
         const option = document.createElement("option");
         option.value = symptom;
-        option.textContent = symptom;
-
-        if (symptom === symptoms) {
-            option.selected = true;
-        }
-
-        select.appendChild(option);
+        datalist.appendChild(option);
     });
 
     // ✅ Auto focus
     setTimeout(() => {
         document.getElementById("symptoms").focus(); 
     }, 100);    
-}
-
-function fillSymptoms(select) {
-    if (select.value) {
-        document.getElementById("symptoms").value = select.value;
-        select.blur(); // removes focus (clean UX)
-    }
 }
 
 function closeModal() {
