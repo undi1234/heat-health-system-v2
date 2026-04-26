@@ -91,7 +91,7 @@
                     <input type="date" name="date" max="{{ today }}" value="{{ today }}" required>
 
                     <label>Handled By</label>
-                    <input type="hidden" name="handled_by" value="{{ session['healthworker_id'] }}">
+                    <input type="hidden" name="handled_by" value="{{ current_worker_id }}">
                     <input type="text" value="{{ username }}" readonly>
 
                     <button type="submit" class="submit-btn">Add Case</button>

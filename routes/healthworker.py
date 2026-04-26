@@ -264,6 +264,11 @@ def illness_records():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return redirect(url_for('auth.home'))
 
+    # Get current health worker
+    user_id = session.get('user_id')
+    current_worker = HealthWorker.query.filter_by(user_id=user_id).first()
+    current_worker_id = current_worker.id if current_worker else None
+
     cases = Illness.query.order_by(Illness.date.desc(), Illness.id.desc()).all()
     workers = HealthWorker.query.order_by(HealthWorker.name.asc()).all()
     residents = Resident.query.order_by(Resident.name.asc()).all()
@@ -342,6 +347,7 @@ def illness_records():
         grouped_cases=grouped_cases,
         workers=workers,
         residents=residents,
+        current_worker_id=current_worker_id,
         today=datetime.utcnow().date()
     )
 
