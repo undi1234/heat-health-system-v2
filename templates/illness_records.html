@@ -16,18 +16,6 @@
     </div>
 </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                {% for category, message in messages %}
-                    showSuccess("{{ message }}", "{{ category }}");
-                {% endfor %}
-            });
-        </script>
-    {% endif %}
-{% endwith %}
-
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -103,7 +91,7 @@
                     <input type="date" name="date" max="{{ today }}" value="{{ today }}" required>
 
                     <label>Handled By</label>
-                    <input type="hidden" name="handled_by" value="{{ session['user_id'] }}">
+                    <input type="hidden" name="handled_by" value="{{ session['healthworker_id'] }}">
                     <input type="text" value="{{ username }}" readonly>
 
                     <button type="submit" class="submit-btn">Add Case</button>
@@ -406,7 +394,7 @@ function closeDeleteModal() {
 function handleEditClick(btn) {
     const name = btn.dataset.name;
     const allCases = JSON.parse(btn.dataset.allcases || "[]");
-    showCases(allCases, name);
+    openEditModalFromCases(name, allCases);
 }
 
 function handleDeleteClick(btn) {
