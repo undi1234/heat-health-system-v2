@@ -187,19 +187,19 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ row.health_workers }}</td>
-                                    <td>{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else 'N/A' }}</td>
+                                    <td>{{ row.latest_date.strftime('%Y-%m-%d') if row.latest_date else '' | tojson }}</td>
                                     <td>
                                         <button class="edit" onclick="openEditModal(
-                                            {{ row.latest_case_id }},
-                                            {{ row.resident_name | tojson }},
-                                            {{ row.latest_symptoms | tojson }},
-                                            {{ row.latest_status | tojson }},
-                                            {{ row.latest_healthworker_id | default('') | tojson }},
-                                            {{ row.latest_date.strftime('%Y-%m-%d') | tojson if row.latest_date else '\"\"' }}
+                                            {{ row.latest_case_id or 0 }},
+                                            {{ (row.resident_name or '') | tojson }},
+                                            {{ (row.latest_symptoms or '') | tojson }},
+                                            {{ (row.latest_status or 'Reported') | tojson }},
+                                            {{ (row.latest_healthworker_id or '') | tojson }},
+                                            {{ (row.latest_date.strftime('%Y-%m-%d') if row.latest_date else '') | tojson }}
                                         )">Edit</button>
                                         <button class="delete" onclick="openDeleteModal(
-                                            {{ row.latest_case_id }},
-                                            {{ row.resident_name | tojson }},
+                                            {{ row.latest_case_id or 0 }},
+                                            {{ (row.resident_name or '') | tojson }},
                                             'illness'
                                         )">Delete</button>
                                     </td>
@@ -348,6 +348,11 @@ document.getElementById("deleteForm").addEventListener("submit", () => {
 
 <script>
 function openDeleteModal(id, name, type) {
+    if (!id) {
+        console.error("Invalid ID for delete");
+        return;
+    }
+
     const form = document.getElementById("deleteForm");
     const message = document.getElementById("deleteMessage");
 
@@ -376,16 +381,21 @@ window.onclick = function(event) {
 }
 
 function openEditModal(id, name, symptoms, status, handled_by, date) {
-    document.getElementById("editModal").style.display = "flex";
+    try {
+        document.getElementById("editModal").style.display = "flex";
 
-    document.getElementById("case_id").value = id;
-    document.getElementById("resident_name").value = name;
-    document.getElementById("symptoms").value = symptoms;
-    document.getElementById("status").value = status;
-    document.getElementById("date").value = date;
-    document.getElementById("handled_by").value = handled_by || '';
+        document.getElementById("case_id").value = id || "";
+        document.getElementById("resident_name").value = name || "";
+        document.getElementById("symptoms").value = symptoms || "";
+        document.getElementById("status").value = status || "Reported";
+        document.getElementById("date").value = date || "";
+        document.getElementById("handled_by").value = handled_by ? String(handled_by) : "";
 
-    document.getElementById("editForm").action = "/edit_case/" + id;
+        document.getElementById("editForm").action = "/edit_case/" + id;
+
+    } catch (error) {
+        console.error("Edit modal error:", error);
+    }
 }
 
 function closeModal() {
