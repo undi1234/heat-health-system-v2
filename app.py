@@ -668,17 +668,17 @@ def init_scheduler():
         scheduler = BackgroundScheduler()
         scheduler.start()
         
-        # Register auto-fetch to run every 5 minutes (for testing)
+        # Register auto-fetch to run every hour
         job = scheduler.add_job(
             func=auto_fetch_temperature,
             trigger="interval",
-            minutes=5,
+            hours=1,
             id="auto_fetch_temp_job"
         )
         
         auto_running = True
         _scheduler_initialized = True
-        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every 5 minutes")
+        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every hour")
     except Exception as e:
         app.logger.error(f"❌ Scheduler init error: {e}")
 

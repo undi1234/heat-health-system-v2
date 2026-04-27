@@ -96,9 +96,9 @@ def resident_dashboard():
         return redirect(url_for('account'))
 
     if resident.address:
-        # Extract purok from address like "Danahao - P1 Manggahan"
+        # Extract barangay from address like "Danahao - P1 Manggahan"
         if " - " in resident.address:
-            barangay = resident.address.split(" - ")[1]  # Get the purok part
+            barangay = resident.address.split(" - ")[0]  # Get the barangay part
         else:
             barangay = resident.address
     else:
@@ -161,14 +161,22 @@ def safety_alerts():
     if not resident:
         return redirect(url_for('auth.home'))
 
-    current_time = datetime.now().strftime("%B %d, %Y | %I:%M:%S %p")
-
     if resident.address:
         barangay = resident.address.split(" - ")[0]
     else:
         barangay = None
 
+    latest_temp = Temperature.query.filter_by(
+        barangay=barangay
+    ).order_by(Temperature.id.desc()).first()
     latest = get_latest_heat_data(barangay)
+
+    if latest_temp:
+        record_time = latest_temp.time or latest_temp.date.strftime("%I:%M:%S %p")
+        record_date = latest_temp.date.strftime("%B %d, %Y")
+        current_time = f"{record_date} | {record_time}"
+    else:
+        current_time = datetime.now().strftime("%B %d, %Y | %I:%M:%S %p")
 
     temperature = latest.temperature if latest else 0
     heat_index = latest.heat_index if latest else 0
