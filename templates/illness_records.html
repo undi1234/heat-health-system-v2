@@ -434,14 +434,6 @@ function showCases(cases, name) {
         });
     }
 
-    list.innerHTML += `
-        <li style="margin-top:10px;">
-            <button onclick='openEditModalFromCases(${JSON.stringify(name)}, ${JSON.stringify(cases)})'>
-                Edit Cases
-            </button>
-        </li>
-    `;
-
     modal.style.display = "flex";
 }
 

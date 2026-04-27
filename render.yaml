@@ -29,3 +29,5 @@ services:
         sync: false
       - key: DEFAULT_CITY
         value: Clarin,Bohol,PH
+      - key: RUN_SCHEDULER
+        value: "true"

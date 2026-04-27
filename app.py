@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 import requests
 import os
 import re
+import pytz
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -594,9 +595,14 @@ def add_temperature():
 # AUTO FETCH TEMPERATURE
 # =========================
 def auto_fetch_temperature():
-    
+    # ✅ REQUIRED in Render: wrap with app context
     with app.app_context():
         try:
+            # ✅ Use Philippine timezone instead of UTC
+            ph_tz = pytz.timezone("Asia/Manila")
+            current_datetime = datetime.now(ph_tz)
+
+            # ✅ Fetch temperature ONLY for Danahao (no loops, no per-purok fetching)
             city = os.getenv("DEFAULT_CITY")
             temp_value = get_online_temperature(city)
 
@@ -604,26 +610,25 @@ def auto_fetch_temperature():
                 app.logger.warning(f"Failed to fetch temperature for {city}")
                 return
 
-            # Save for all barangays in Danahao
-            barangays = [
-                "Danahao",
-                "P1 Manggahan", 
+            # ✅ Apply the SAME temperature value to ALL puroks under Danahao
+            puroks = [
+                "P1 Manggahan",
                 "P2 Cocoahill",
-                "P3 Maligaya", 
+                "P3 Maligaya",
                 "P4 Camarin",
                 "P5 Riverside",
                 "P6 Buntod",
                 "P7 Tuog"
             ]
 
-            current_datetime = datetime.now()
-
-            for brgy in barangays:
+            # ✅ Save the same temperature value for each purok
+            for purok in puroks:
                 new_temp = Temperature(
-                    value=temp_value,
+                    value=temp_value,  # Same value for all puroks
                     date=current_datetime,
                     time=current_datetime.strftime("%I:%M:%S %p"),
-                    barangay=brgy   
+                    barangay="Danahao",  # Always Danahao
+                    purok=purok  # Different purok for each record
                 )
                 db.session.add(new_temp)
                 db.session.flush()
@@ -631,18 +636,19 @@ def auto_fetch_temperature():
                 heat_index_value, status = compute_heat_index(temp_value)
 
                 new_heat = HeatIndex(
-                    temperature=temp_value,
+                    temperature=temp_value,  # Same value for all puroks
                     heat_index=round(heat_index_value, 2),
                     status=status,
                     date=current_datetime,
+                    purok=purok,  # Different purok for each record
                     temperature_id=new_temp.id
                 )
-
                 db.session.add(new_heat)
 
+            # ✅ Make sure commit exists
             db.session.commit()
 
-            app.logger.info("✅ Auto temperature saved for all barangays")
+            app.logger.info(f"✅ Auto temperature saved for all Danahao puroks: {temp_value}°C")
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Auto fetch failed: {e}")
@@ -661,6 +667,12 @@ def init_scheduler():
     global scheduler, job, auto_running, _scheduler_initialized
     
     if _scheduler_initialized or scheduler is not None:
+        return
+    
+    # ✅ Check RUN_SCHEDULER environment variable
+    if os.environ.get("RUN_SCHEDULER") != "true":
+        app.logger.info("⏸️  Scheduler disabled (set RUN_SCHEDULER=true to enable)")
+        _scheduler_initialized = True
         return
     
     try:
@@ -689,39 +701,28 @@ def auto_start_scheduler():
     if scheduler is None:
         init_scheduler()
 
-# ✅ Health worker can manually control auto-fetch
+# ✅ Health worker can check auto-fetch status (READ-ONLY)
 @app.route('/start_auto_temp', methods=['POST'])
 def start_auto_temp():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return jsonify({"error": "Unauthorized"}), 403
-    
-    global scheduler, auto_running
-    
-    # Ensure scheduler is initialized
-    if scheduler is None:
-        init_scheduler()
-    
-    if scheduler and not auto_running:
-        auto_running = True
-        app.logger.info("✅ Auto fetch manually enabled")
-        print("🟢 Auto fetch STARTED (manual)")
 
-    return jsonify({"status": "running"})
+    # System now runs automatically - no manual start needed
+    return jsonify({
+        "status": "automatic",
+        "message": "System runs automatically every hour. No manual start needed."
+    })
 
 # =========================
-# MANUAL TRIGGER AUTO FETCH
+# MANUAL TRIGGER AUTO FETCH (DISABLED - NOW AUTOMATIC)
 # =========================
 @app.route('/manual_auto_fetch', methods=['POST'])
 def manual_auto_fetch():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return jsonify({"error": "Unauthorized"}), 403
-    
-    try:
-        auto_fetch_temperature()
-        flash("Manual auto-fetch completed!", "success")
-    except Exception as e:
-        flash(f"Manual auto-fetch failed: {e}", "error")
-    
+
+    # System now runs automatically - manual trigger disabled
+    flash("System runs automatically every hour. Manual trigger disabled.", "info")
     return redirect(url_for('temperature_records'))
 
 # =========================

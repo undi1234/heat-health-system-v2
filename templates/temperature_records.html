@@ -76,13 +76,11 @@
         </button>
         </form>
 
-        <!-- MANUAL AUTO FETCH BUTTON -->
-        <form action="/manual_auto_fetch" method="POST" class="temp-form" style="margin-top: 10px;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" onclick="this.innerText='Fetching...'">
-                🔄 Auto Fetch Now
-            </button>
-        </form>
+        <!-- SYSTEM NOW RUNS AUTOMATICALLY - NO MANUAL TRIGGER NEEDED -->
+        <div class="auto-notice" style="margin-top: 10px; padding: 10px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 5px; color: #2e7d32;">
+            <strong>🔄 Automatic System Active</strong><br>
+            Temperature data is fetched automatically every hour from Danahao and applied to all puroks.
+        </div>
         {% endif %}
 
         <div class="table-container">

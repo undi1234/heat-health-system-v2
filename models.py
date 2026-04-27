@@ -22,6 +22,7 @@ class Resident(db.Model):
     name = db.Column(db.String(100), nullable=False)
     gender = db.Column(db.String(10), nullable=False)
     address = db.Column(db.String(100))
+    purok = db.Column(db.String(50), default="Unknown")
     contact = db.Column(db.String(20), unique=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'))
 
@@ -42,6 +43,7 @@ class Temperature(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     time = db.Column(db.String(20))
     barangay = db.Column(db.String(50), nullable=False)
+    purok = db.Column(db.String(50), default="Unknown")
 
 
 class HeatIndex(db.Model):
@@ -51,6 +53,7 @@ class HeatIndex(db.Model):
     heat_index = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+    purok = db.Column(db.String(50), default="Unknown")
     temperature_id = db.Column(db.Integer, db.ForeignKey('temperature.id', ondelete='CASCADE'))
 
 
