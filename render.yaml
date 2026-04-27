@@ -3,7 +3,7 @@ services:
     name: heat-health-monitoring
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+    startCommand: gunicorn wsgi:app --timeout 120
     region: oregon
     plan: free
     envVars:
@@ -31,3 +31,5 @@ services:
         value: Clarin,Bohol,PH
       - key: RUN_SCHEDULER
         value: "true"
+      - key: WEB_CONCURRENCY
+        value: "1"

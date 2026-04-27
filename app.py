@@ -610,45 +610,34 @@ def auto_fetch_temperature():
                 app.logger.warning(f"Failed to fetch temperature for {city}")
                 return
 
-            # ✅ Apply the SAME temperature value to ALL puroks under Danahao
-            puroks = [
-                "P1 Manggahan",
-                "P2 Cocoahill",
-                "P3 Maligaya",
-                "P4 Camarin",
-                "P5 Riverside",
-                "P6 Buntod",
-                "P7 Tuog"
-            ]
+            # ✅ Single temperature record for Danahao (all puroks will use this)
+            new_temp = Temperature(
+                value=temp_value,
+                date=current_datetime,
+                time=current_datetime.strftime("%I:%M:%S %p"),
+                barangay="Danahao",
+                purok="Danahao"  # Single record - all puroks reference this
+            )
+            db.session.add(new_temp)
+            db.session.flush()
 
-            # ✅ Save the same temperature value for each purok
-            for purok in puroks:
-                new_temp = Temperature(
-                    value=temp_value,  # Same value for all puroks
-                    date=current_datetime,
-                    time=current_datetime.strftime("%I:%M:%S %p"),
-                    barangay="Danahao",  # Always Danahao
-                    purok=purok  # Different purok for each record
-                )
-                db.session.add(new_temp)
-                db.session.flush()
+            # ✅ Single heat index record
+            heat_index_value, status = compute_heat_index(temp_value)
 
-                heat_index_value, status = compute_heat_index(temp_value)
+            new_heat = HeatIndex(
+                temperature=temp_value,
+                heat_index=round(heat_index_value, 2),
+                status=status,
+                date=current_datetime,
+                purok="Danahao",  # Single record
+                temperature_id=new_temp.id
+            )
+            db.session.add(new_heat)
 
-                new_heat = HeatIndex(
-                    temperature=temp_value,  # Same value for all puroks
-                    heat_index=round(heat_index_value, 2),
-                    status=status,
-                    date=current_datetime,
-                    purok=purok,  # Different purok for each record
-                    temperature_id=new_temp.id
-                )
-                db.session.add(new_heat)
-
-            # ✅ Make sure commit exists
+            # ✅ Single commit
             db.session.commit()
 
-            app.logger.info(f"✅ Auto temperature saved for all Danahao puroks: {temp_value}°C")
+            app.logger.info(f"✅ Temperature saved for Danahao: {temp_value}°C")
         except Exception as e:
             db.session.rollback()
             app.logger.error(f"Auto fetch failed: {e}")
@@ -679,27 +668,35 @@ def init_scheduler():
         scheduler = BackgroundScheduler()
         scheduler.start()
         
-        # Register auto-fetch to run every 1 hour
+        # Register auto-fetch to run every 5 minutes (for testing)
         job = scheduler.add_job(
             func=auto_fetch_temperature,
             trigger="interval",
-            hours=1,
+            minutes=5,
             id="auto_fetch_temp_job"
         )
         
         auto_running = True
         _scheduler_initialized = True
-        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every 1 hour")
+        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every 5 minutes")
     except Exception as e:
         app.logger.error(f"❌ Scheduler init error: {e}")
 
-# Auto-start scheduler on first request
+def start_scheduler_late():
+    """Start scheduler with 10 second delay to avoid blocking workers"""
+    import time
+    time.sleep(10)
+    if os.environ.get("RUN_SCHEDULER") == "true":
+        init_scheduler()
+
+# Auto-start scheduler on first request with delay
 @app.before_request
 def auto_start_scheduler():
-    """Start scheduler automatically on first request"""
+    """Start scheduler automatically on first request with threading delay"""
     global scheduler
     if scheduler is None:
-        init_scheduler()
+        import threading
+        threading.Thread(target=start_scheduler_late).start()
 
 # ✅ Health worker can check auto-fetch status (READ-ONLY)
 @app.route('/start_auto_temp', methods=['POST'])
