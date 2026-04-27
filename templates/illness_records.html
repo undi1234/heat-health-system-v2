@@ -427,8 +427,13 @@ function showCases(cases, name) {
         cases.forEach(c => {
             list.innerHTML += `
                 <li class="case-item">
-                    <strong>${c.symptoms}</strong><br>
-                    <small>${c.date}</small>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${c.symptoms}</strong><br>
+                            <small>${c.date} - ${c.status}</small>
+                        </div>
+                        <button class="delete-btn" onclick="openDeleteModal(${c.id}, '${name}', 'illness')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button>
+                    </div>
                 </li>
             `;
         });

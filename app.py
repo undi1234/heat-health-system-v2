@@ -229,17 +229,28 @@ def account():
         # =========================
         # SAVE CLEAN DATA
         # =========================
-        profile.contact = new_contact
+        has_changes = False
+        
+        if profile.contact != new_contact:
+            profile.contact = new_contact
+            has_changes = True
 
         if user.role == "Resident":
-            profile.address = request.form.get('address', '').strip()
-
+            new_address = request.form.get('address', '').strip()
+            if profile.address != new_address:
+                profile.address = new_address
+                has_changes = True
         else:
-            profile.position = position
+            if profile.position != position:
+                profile.position = position
+                has_changes = True
 
-        db.session.commit()
-
-        flash("Profile updated successfully!", "success")
+        if has_changes:
+            db.session.commit()
+            flash("Profile updated successfully!", "success")
+        else:
+            flash("No changes were made to your profile.", "info")
+        
         return redirect(url_for('account'))
 
     return render_template(
