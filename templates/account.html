@@ -15,6 +15,15 @@
     </div>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
+            localStorage.setItem("flashType", "{{ messages[0][0] }}");
+        </script>
+    {% endif %}
+{% endwith %}
+
 
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
@@ -76,7 +85,7 @@
                 <!-- ADDRESS -->
                 <div class="form-group">
                     <label>Address</label>
-                    <input type="text" name="address" value="{{ profile.address }} " readonly>
+                    <input type="text" name="address" value="{{ profile.address }}" readonly>
                 </div>
 
                 <!-- CONTACT -->
@@ -244,8 +253,6 @@ document.getElementById("profileForm").addEventListener("submit", function(e) {
         return;
     }
 
-    // store message BEFORE reload
-    localStorage.setItem("successMessage", "Profile updated successfully!");
 });
 
 // ✅ PASSWORD UPDATE
@@ -255,8 +262,6 @@ document.getElementById("passwordForm").addEventListener("submit", function(e) {
         showModal("Please fix the errors first.", "error");
         return;
     }
-
-    localStorage.setItem("successMessage", "Password updated successfully!");
 });
 
 function showModal(message, type = "success") {
@@ -280,6 +285,39 @@ function showModal(message, type = "success") {
     }, 1500); // 1.5 seconds (you can change)
 }
 
+const form = document.getElementById("profileForm");
+
+form.addEventListener("submit", function(e) {
+
+    const contact = document.querySelector("input[name='contact']");
+    const address = document.querySelector("input[name='address']");
+    const position = document.querySelector("select[name='position']");
+
+    const original = {
+        contact: "{{ profile.contact }}".trim(),
+        address: "{{ profile.address or '' }}".trim(),
+        position: "{{ profile.position or '' }}"
+    };
+
+    // ❌ IF NO CHANGE → STOP
+    if (
+        (contact?.value.trim() || "") === original.contact &&
+        (address?.value.trim() || "") === original.address &&
+        (position?.value || "") === original.position
+    ) {
+        e.preventDefault();
+        showModal("No changes detected.", "error");
+        return;
+    }
+
+    // ❌ IF INVALID INPUT
+    if (document.querySelector(".invalid")) {
+        e.preventDefault();
+        showModal("Please fix the errors first.", "error");
+        return;
+    }
+
+});
 </script>
 
 <script>
@@ -446,28 +484,16 @@ window.addEventListener("load", () => {
 <script>
 window.addEventListener("DOMContentLoaded", () => {
 
-    // ✅ SHOW SUCCESS MODAL AFTER RELOAD
-    const message = localStorage.getItem("successMessage");
-    if (message) {
-        showModal(message, "success");
-        localStorage.removeItem("successMessage");
+    const flashMsg = localStorage.getItem("flashMessage");
+    const flashType = localStorage.getItem("flashType");
+
+    if (flashMsg) {
+        showModal(flashMsg, flashType === "info" ? "error" : "success");
+
+        localStorage.removeItem("flashMessage");
+        localStorage.removeItem("flashType");
     }
 
-    // ✅ CLEAN INPUT STATES
-    document.querySelectorAll("input").forEach(input => {
-        input.classList.remove("input-error", "invalid", "valid");
-    });
-});
-
-form.addEventListener("submit", function(e) {
-    if (
-        contact.value.trim() === original.contact &&
-        address?.value?.trim() === original.address &&
-        position?.value === original.position
-    ) {
-        e.preventDefault();
-        showSuccess("No changes detected.", "error");
-    }
 });
 </script>
 

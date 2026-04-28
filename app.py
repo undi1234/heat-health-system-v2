@@ -781,14 +781,13 @@ def sensor_data():
         return jsonify({"error": "Invalid data"}), 400
 
     temp_value = float(data['temperature'])
-    date = data['date']
-    time = data['time']
+    ph_tz = pytz.timezone("Asia/Manila")
+    current_datetime = datetime.now(ph_tz)
 
-    # SAVE TEMP
     new_temp = Temperature(
         value=temp_value,
-        date=date,
-        time=time,
+        date=current_datetime,
+        time=current_datetime.strftime("%I:%M:%S %p"),
         barangay="Sensor Area"
     )
     db.session.add(new_temp)
@@ -802,7 +801,7 @@ def sensor_data():
         temperature=temp_value,
         heat_index=round(heat_index_value, 2),
         status=status,
-        date=date,
+        date=current_datetime,
         temperature_id=new_temp.id
     )
 
@@ -1230,6 +1229,64 @@ def delete_user(id):
 
     return redirect(url_for('healthworker.users'))
 
+# =========================
+# DELETE HEALTH WORKERS
+# =========================
+@app.route('/delete_health_worker/<int:id>', methods=['POST'])
+def delete_health_worker(id):
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return redirect('/')
+
+    worker = HealthWorker.query.get_or_404(id)
+
+    try:
+        # ❌ BLOCK if used in illness records
+        related_cases = Illness.query.filter_by(healthworker_id=worker.id).first()
+        if related_cases:
+            flash("Cannot delete worker — assigned to illness records.", "error")
+            return redirect(url_for('healthworker.health_workers'))
+
+        # ✅ delete linked user
+        if worker.user_id:
+            user = User.query.get(worker.user_id)
+            if user:
+                db.session.delete(user)
+
+        db.session.delete(worker)
+        db.session.commit()
+
+        flash("Health worker deleted successfully!", "success")
+
+    except Exception as e:
+        db.session.rollback()
+        flash("Delete failed. Try again.", "error")
+
+    return redirect(url_for('healthworker.health_workers'))
+
+# =========================
+# UPDATE HEALTH WORKERS
+# =========================
+@app.route('/update_worker/<int:id>', methods=['POST'])
+def update_worker(id):
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return redirect('/')
+    
+    worker = HealthWorker.query.get_or_404(id)
+
+    new_position = request.form['position'].strip()
+    old_position = worker.position.strip()
+
+    # ✅ check if no change (case-insensitive)
+    if new_position.lower() == old_position.lower():
+        flash("No changes detected.", "error")
+        return redirect(url_for('healthworker.health_workers'))
+
+    # ✅ update
+    worker.position = new_position
+    db.session.commit()
+
+    flash("Health worker updated successfully!", "success")
+    return redirect(url_for('healthworker.health_workers'))
 
 # =========================
 # SESSION SECURITY

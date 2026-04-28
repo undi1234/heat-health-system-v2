@@ -37,6 +37,16 @@
     </div>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
+            localStorage.setItem("flashType", "{{ messages[0][0] }}");
+        </script>
+    {% endif %}
+{% endwith %}
+
+
 <!-- 🔴 TOPBAR -->
 <div class="topbar">
     <div class="left">
@@ -179,6 +189,8 @@
                     } else {
                         noSearchMessage.style.display = "none";
                     }
+
+                    updatePurokVisibility();
                 });
             });
         </script>
@@ -341,43 +353,71 @@ function showSuccess(message, type = "success") {
     }, 1500);
 }
 
-// ✅ ADD RESIDENT
-document.querySelector("#addResidentModal form").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Resident added successfully!");
-});
-
 // ✅ UPDATE RESIDENT
-document.getElementById("editForm").addEventListener("submit", () => {
+document.getElementById("editForm").addEventListener("submit", function(e) {
+    const address = document.getElementById("edit_address").value.trim();
+    const contact = document.getElementById("edit_contact").value.trim();
+
+    if (address === originalResident.address && contact === originalResident.contact) {
+        e.preventDefault();
+        showSuccess("No changes detected.", "error");
+        return;
+    }
+
     localStorage.setItem("successMessage", "Resident updated successfully!");
 });
 
-// ✅ DELETE RESIDENT
-document.getElementById("deleteForm").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Resident deleted successfully!");
-});
-
 window.addEventListener("DOMContentLoaded", () => {
-    const message = localStorage.getItem("successMessage");
+    const msg = localStorage.getItem("flashMessage") || localStorage.getItem("successMessage");
+    const type = localStorage.getItem("flashType");
 
-    if (message) {
-        showSuccess(message);
+    if (msg) {
+        let modalType = "success";
+        if (type === "error" || type === "info") modalType = "error";
+
+        showSuccess(msg, modalType);
+
+        localStorage.removeItem("flashMessage");
+        localStorage.removeItem("flashType");
         localStorage.removeItem("successMessage");
     }
 });
 
-
-document.querySelectorAll(".purok-section").forEach(section => {
-    const visibleRows = section.querySelectorAll("tbody tr:not(.empty-row):not([style*='display: none'])");
-
-    if (visibleRows.length === 0) {
-        section.style.display = "none";
-    } else {
-        section.style.display = "";
-    }
+// ✅ ADD
+document.querySelector("#addResidentModal form").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Resident added successfully!");
 });
+
+// ✅ DELETE
+document.getElementById("deleteForm").addEventListener("submit", () => {
+    localStorage.setItem("successMessage", "Resident deleted successfully!");
+});
+
+
+function updatePurokVisibility() {
+    document.querySelectorAll(".purok-section").forEach(section => {
+        const rows = section.querySelectorAll("tbody tr");
+
+        let visible = false;
+
+        rows.forEach(row => {
+            if (row.style.display !== "none" && row.children.length > 1) {
+                visible = true;
+            }
+        });
+
+        section.style.display = visible ? "" : "none";
+    });
+}
+
 </script>
 
 <script>
+let originalResident = {
+    address: "",
+    contact: ""
+};
+
 function openEditModal(id, name, gender, address, contact) {
     document.getElementById("editModal").style.display = "flex";
 
@@ -388,6 +428,12 @@ function openEditModal(id, name, gender, address, contact) {
     document.getElementById("edit_contact").value = contact;
 
     document.getElementById("editForm").action = "/update_resident/" + id;
+
+    // ✅ STORE ORIGINAL VALUES
+    originalResident = {
+        address: address,
+        contact: contact
+    };
 }
 
 function openDeleteModal(id, name) {
@@ -410,11 +456,12 @@ function closeModal() {
 
 // Close when clicking outside
 window.onclick = function(event) {
-    const modal = document.getElementById("deleteModal");
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
+    ["deleteModal", "editModal", "addResidentModal"].forEach(id => {
+        const modal = document.getElementById(id);
+        if (event.target === modal) modal.style.display = "none";
+    });
+};
+
 </script>
 
 {% include 'logout_modal.html' %}

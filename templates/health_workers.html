@@ -6,6 +6,9 @@
     <title>Health Workers</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
 </head>
+
+<body>
+
 <div id="deleteModal" class="modal">
     <div class="modal-content">
 
@@ -28,7 +31,6 @@
 
     </div>
 </div>
-<body>
 
 <!-- ✅ SUCCESS MODAL -->
 <div id="successModal" class="success-modal">
@@ -36,6 +38,15 @@
         <h3 id="successText">Message</h3>
     </div>
 </div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            localStorage.setItem("flashMessage", {{ messages[0][1] | tojson }});
+            localStorage.setItem("flashType", {{ messages[0][0] | tojson }});
+        </script>
+    {% endif %}
+{% endwith %}
 
 
 <!-- 🔴 TOPBAR -->
@@ -120,7 +131,7 @@
         </script>
 
         <!-- SEARCH -->
-        <input type="text" id="searchInput" placeholder="Search HealthWorker..." class="search">
+        <input type="text" id="searchInput" placeholder="Search health workers..."class="search">
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -157,6 +168,8 @@
                     } else {
                         noSearchMessage.style.display = "none";
                     }
+
+                    updateWorkerVisibility();
                 });
             });
         </script>
@@ -190,7 +203,7 @@
                     {% if workers %}
                         {% for w in workers %}
                         <tr>
-                            <td>{{ w.code }}</td>
+                            <td>W{{ "%03d"|format(w.id) }}</td>
                             <td>{{ w.name }}</td>
                             <td>{{ w.position }}</td>
                             <td>{{ w.contact }}</td>
@@ -250,7 +263,7 @@
 
         <h3>Edit Health Worker</h3>
 
-        <form id="editWorkerForm" method="POST">
+        <form id="editWorkerForm" method="POST" action="#">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <input type="hidden" name="id" id="worker_id">
@@ -299,12 +312,24 @@ function showSuccess(message, type = "success") {
 }
 
 // ✅ ADD
-document.querySelector("#addWorkerModal form").addEventListener("submit", () => {
-    localStorage.setItem("successMessage", "Health worker added successfully!");
-});
+const addForm = document.querySelector("#addWorkerModal form");
+if (addForm) {
+    addForm.addEventListener("submit", () => {
+        localStorage.setItem("successMessage", "Health worker added successfully!");
+    });
+}
 
 // ✅ UPDATE
-document.getElementById("editWorkerForm").addEventListener("submit", () => {
+document.getElementById("editWorkerForm").addEventListener("submit", function(e) {
+    const newPosition = document.getElementById("worker_position").value.trim().toLowerCase();
+    const originalPosition = (originalWorker.position || "").trim().toLowerCase();
+
+    if (newPosition === originalPosition) {
+        e.preventDefault();
+        showSuccess("No changes detected.", "error");
+        return;
+    }
+
     localStorage.setItem("successMessage", "Health worker updated successfully!");
 });
 
@@ -314,13 +339,25 @@ document.getElementById("deleteForm").addEventListener("submit", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    const message = localStorage.getItem("successMessage");
+    const msg = localStorage.getItem("flashMessage") || localStorage.getItem("successMessage");
+    const type = localStorage.getItem("flashType");
 
-    if (message) {
-        showSuccess(message);
+    if (msg) {
+        let modalType = "success";
+        if (type === "error" || type === "info") modalType = "error";
+
+        showSuccess(msg, modalType);
+
+        localStorage.removeItem("flashMessage");
+        localStorage.removeItem("flashType");
         localStorage.removeItem("successMessage");
     }
 });
+
+let originalWorker = {
+    position: "",
+    contact: ""
+};
 </script>
 
 <script>
@@ -333,13 +370,19 @@ function openEditWorkerModal(id, name, position, contact) {
     document.getElementById("worker_contact").value = contact;
 
     document.getElementById("editWorkerForm").action = "/update_worker/" + id;
+
+    // ✅ STORE ORIGINAL
+    originalWorker = {
+        position: (position || "").trim(),
+        contact: (contact || "").trim()
+    };
 }
 
 function openDeleteModal(id, name) {
     const form = document.getElementById("deleteForm");
     const message = document.getElementById("deleteMessage");
 
-    form.action = "{{ url_for('healthworker.delete_health_worker', id=0) }}".replace('0', id);
+    form.action = "/delete_health_worker/" + id;
 
     message.innerHTML = `Are you sure you want to delete <strong>${name}</strong>?`;
 
@@ -355,16 +398,28 @@ function closeWorkerModal() {
 }
 
 window.onclick = function(event) {
-    const deleteModal = document.getElementById("deleteModal");
-    const editModal = document.getElementById("editWorkerModal");
+    ["deleteModal", "editWorkerModal", "addWorkerModal"].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal && event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+};
 
-    if (event.target == deleteModal) {
-        deleteModal.style.display = "none";
-    }
+function updateWorkerVisibility() {
+    document.querySelectorAll(".purok-section").forEach(section => {
+        const rows = section.querySelectorAll("tbody tr");
 
-    if (event.target == editModal) {
-        editModal.style.display = "none";
-    }
+        let hasVisible = false;
+
+        rows.forEach(row => {
+            if (row.style.display !== "none" && !row.querySelector("td[colspan]")) {
+                hasVisible = true;
+            }
+        });
+
+        section.style.display = hasVisible ? "" : "none";
+    });
 }
 </script>
 
