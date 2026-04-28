@@ -505,8 +505,8 @@ def login():
     session['fullname'] = user.fullname
     session.permanent = True
 
-    flash("Login successful!", "success")
-
+    flash("Login successful!", "auth")
+    
     if user.role == "Resident":
         return redirect(url_for('resident.resident_dashboard'))
     else:
@@ -514,10 +514,10 @@ def login():
 
 
 # =========================
-# LOGOUT
+# LOGOUT 
 # =========================
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out successfully!", "success")
+    flash("Logged out successfully!", "auth)
     return redirect(url_for('auth.home'))
