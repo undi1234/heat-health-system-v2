@@ -434,25 +434,6 @@ def update_resident(id):
     return redirect(url_for('healthworker.residents_management'))
 
 # =========================
-# UPDATE HEALTH WORKERS
-# =========================
-@app.route('/update_worker/<int:id>', methods=['POST'])
-def update_worker(id):
-    if 'user' not in session or session.get('role') != "HealthWorker":
-        return redirect('/')
-    
-    worker = HealthWorker.query.get_or_404(id)
-
-    worker.position = request.form['position']
-#    worker.contact = request.form['contact']
-
-    db.session.commit()
-
-    flash("Worker updated!", "success")
-    return redirect(url_for('healthworker.health_workers'))
-
-
-# =========================
 # API FOR HEALTH WORKERS
 # =========================
 @app.route('/api/healthworkers')
@@ -1276,17 +1257,16 @@ def update_worker(id):
     new_position = request.form['position'].strip()
     old_position = worker.position.strip()
 
-    # ✅ check if no change (case-insensitive)
     if new_position.lower() == old_position.lower():
         flash("No changes detected.", "error")
         return redirect(url_for('healthworker.health_workers'))
 
-    # ✅ update
     worker.position = new_position
     db.session.commit()
 
     flash("Health worker updated successfully!", "success")
     return redirect(url_for('healthworker.health_workers'))
+
 
 # =========================
 # SESSION SECURITY
