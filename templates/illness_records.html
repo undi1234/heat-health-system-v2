@@ -8,6 +8,27 @@
 </head>
 
 <body>
+<!-- ✅ Define showSuccess FIRST before anything calls it -->
+<script>
+function showSuccess(message, type = "success") {
+    const modal = document.getElementById("successModal");
+    const box = modal.querySelector(".success-box");
+    const text = document.getElementById("successText");
+
+    text.textContent = message;
+    box.classList.remove("error");
+
+    if (type === "illness_error" || type === "error") {
+        box.classList.add("error");
+    }
+
+    modal.classList.add("show");
+
+    setTimeout(() => {
+        modal.classList.remove("show");
+    }, 1500);
+}
+</script>
 
 <!-- ✅ SUCCESS MODAL -->
 <div id="successModal" class="success-modal">
@@ -19,11 +40,9 @@
 {% with messages = get_flashed_messages(with_categories=true, category_filter=["illness_success", "illness_error"]) %}
     {% if messages %}
         <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const msg = "{{ messages[0][1] }}";
-                const type = "{{ messages[0][0] }}";
-                showSuccess(msg, type);
-            });
+            // ✅ Store in localStorage so it shows AFTER DOM is fully ready
+            localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
+            localStorage.setItem("flashType", "{{ messages[0][0] }}");
         </script>
     {% endif %}
 {% endwith %}
@@ -219,10 +238,10 @@
                                             Edit
                                         </button>
                                         <button class="delete"
-                                            data-id="{{ row.latest_case_id or 0 }}"
+                                            data-resident="{{ row.resident_id }}"
                                             data-name="{{ row.resident_name }}"
-                                            onclick="handleDeleteClick(this)">
-                                            Delete
+                                            onclick="handleDeleteAllClick(this)">
+                                            Delete All
                                         </button>
                                     </td>
                                 </tr>
@@ -334,50 +353,36 @@
     </div>
 </div>
 
-<!-- ONLY SHOWING FIXED SCRIPT PART (no need to change your HTML above) -->
-
 <script>
-function showSuccess(message, type = "success") {
-    const modal = document.getElementById("successModal");
-    const box = modal.querySelector(".success-box");
-    const text = document.getElementById("successText");
-
-    text.textContent = message;
-    box.classList.remove("error");
-
-    if (type === "error") {
-        box.classList.add("error");
-    }
-
-    modal.classList.add("show");
-
-    setTimeout(() => {
-        modal.classList.remove("show");
-    }, 1500);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
 
-    // SHOW SUCCESS
+    // ✅ SHOW FLASH MESSAGE (from server redirect)
+    const flashMsg = localStorage.getItem("flashMessage");
+    const flashType = localStorage.getItem("flashType");
+    if (flashMsg) {
+        showSuccess(flashMsg, flashType || "success");
+        localStorage.removeItem("flashMessage");
+        localStorage.removeItem("flashType");
+    }
+
+    // ✅ SHOW SUCCESS MESSAGE (from client-side submit)
     const message = localStorage.getItem("successMessage");
     if (message) {
         showSuccess(message);
         localStorage.removeItem("successMessage");
     }
-    
-    // EDIT
-    const editForm = document.getElementById("editForm");
-    if (editForm) {
-        editForm.addEventListener("submit", () => {
-            localStorage.setItem("successMessage", "Case updated successfully!");
-        });
-    }
 
-    // DELETE
+
+
+    // ✅ DELETE FORM
     const deleteForm = document.getElementById("deleteForm");
     if (deleteForm) {
         deleteForm.addEventListener("submit", () => {
-            localStorage.setItem("successMessage", "Case deleted successfully!");
+            if (deleteForm.action.includes("delete_all_cases")) {
+                localStorage.setItem("successMessage", "All cases deleted successfully!");
+            } else {
+                localStorage.setItem("successMessage", "Case deleted successfully!");
+            }
         });
     }
 
@@ -386,14 +391,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <script>
 function openDeleteModal(id, name, type) {
-    if (!id) return;
-
     const form = document.getElementById("deleteForm");
     const message = document.getElementById("deleteMessage");
 
     if (type === "illness") {
+        // Single case delete
         form.action = "/delete_case/" + id;
-        message.innerHTML = `Are you sure you want to delete case of <strong>${name}</strong>?`;
+        message.innerHTML = `Are you sure you want to delete <strong>this case</strong> of <strong>${name}</strong>?`;
+
+    } else if (type === "delete_all") {
+        // All cases for resident
+        form.action = "/delete_all_cases/" + id;  // id = resident_id here
+        message.innerHTML = `Are you sure you want to delete <strong>ALL cases</strong> of <strong>${name}</strong>?`;
     }
 
     document.getElementById("deleteModal").style.display = "flex";
@@ -409,8 +418,10 @@ function handleEditClick(btn) {
     openEditModalFromCases(name, allCases);
 }
 
-function handleDeleteClick(btn) {
-    openDeleteModal(btn.dataset.id, btn.dataset.name, 'illness');
+function handleDeleteAllClick(btn) {
+    const residentId = btn.dataset.resident;
+    const name = btn.dataset.name;
+    openDeleteModal(residentId, name, "delete_all");  // ✅ this is all you need
 }
 
 function showCases(cases, name) {
@@ -426,15 +437,19 @@ function showCases(cases, name) {
     } else {
         cases.forEach(c => {
             list.innerHTML += `
-                <li class="case-item">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${c.symptoms}</strong><br>
-                            <small>${c.date} - ${c.status}</small>
-                        </div>
-                        <button class="delete-btn" onclick="openDeleteModal(${c.id}, '${name}', 'illness')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button>
+            <li class="case-item">
+                <div class="case-row">
+                    <div class="case-info">
+                        <strong>${c.symptoms}</strong><br>
+                        <small>${c.date} - ${c.status}</small>
                     </div>
-                </li>
+
+                    <button class="delete-btn"
+                        onclick="openDeleteModal(${c.id}, '${name}', 'illness')">
+                        Delete
+                    </button>
+                </div>
+            </li>
             `;
         });
     }
@@ -468,6 +483,39 @@ function openEditModalFromCases(name, cases) {
     }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("editForm");
+
+    if (form) {
+    form.addEventListener("submit", function(e) {
+        const current = {
+            symptoms: document.getElementById("symptoms").value.trim(),
+            status: document.getElementById("status").value.trim(),
+            date: document.getElementById("date").value,
+            worker: String(document.getElementById("handled_by").value)
+        };
+
+        const original = {
+            symptoms: (originalData.symptoms || "").trim(),
+            status: (originalData.status || "").trim(),
+            date: (originalData.date || "").substring(0, 10),
+            worker: String(originalData.worker || "")
+        };
+
+        if (
+            current.symptoms === original.symptoms &&
+            current.status === original.status &&
+            current.date === original.date &&
+            current.worker === original.worker
+        ) {
+            e.preventDefault();
+            showSuccess("No changes detected.", "illness_error");
+        }
+    });
+    }
+});
+
+
 function onCaseChange() {
     const id = document.getElementById("case_id").value;
     const selected = currentCases.find(c => c.id == id);
@@ -476,7 +524,18 @@ function onCaseChange() {
     }
 }
 
+let originalData = {};
+
 function loadCaseData(caseData, allCases) {
+    // ✅ STORE ORIGINAL DATA
+    originalData = {
+        symptoms: (caseData.symptoms || "").trim(),
+        status: (caseData.status || "").trim(),
+        date: (caseData.date || "").substring(0, 10),
+        worker: caseData.worker_id ? String(caseData.worker_id) : ""
+    };
+
+    // ✅ FILL FORM
     document.getElementById("case_id").value = caseData.id;
     document.getElementById("symptoms").value = caseData.symptoms;
     document.getElementById("status").value = caseData.status;
@@ -485,6 +544,7 @@ function loadCaseData(caseData, allCases) {
 
     document.getElementById("editForm").action = "/edit_case/" + caseData.id;
 
+    // ✅ SYMPTOMS SUGGESTIONS
     const datalist = document.getElementById("symptomOptions");
     datalist.innerHTML = "";
 

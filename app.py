@@ -117,7 +117,7 @@ def inject_user():
 
 
 # =========================
-# ACCOUNT INFORMATION
+# ACCOUNT INFORMATION (FIXED)
 # =========================
 @app.route('/account', methods=['GET', 'POST'])
 def account():
@@ -163,34 +163,28 @@ def account():
         contact_error = None
         position_error = None
 
-        # 🔹 GET + CLEAN CONTACT
+        # 🔹 CLEAN CONTACT
         new_contact = request.form.get('contact', '').strip()
         new_contact = re.sub(r"[^\d+]", "", new_contact)
 
-        # 🔹 NORMALIZE (+639 → 09)
         if new_contact.startswith("+639"):
             new_contact = "0" + new_contact[3:]
 
         new_contact = re.sub(r"\D", "", new_contact)
 
         # =========================
-        # CONTACT VALIDATION (SAME AS REGISTER)
+        # CONTACT VALIDATION
         # =========================
-
-        # FORMAT
         if not re.match(r"^09\d{9}$", new_contact):
             contact_error = "Invalid PH contact number"
 
-        # REPEATING DIGITS (e.g., 09999999999)
         elif re.search(r"(\d)\1{6,}", new_contact):
             contact_error = "Invalid contact number"
 
-        # SEQUENTIAL (e.g., 09123456789)
         elif new_contact[2:] in "0123456789" or new_contact[2:] in "9876543210":
             contact_error = "Invalid contact number"
 
         else:
-            # UNIQUE CHECK (exclude self)
             existing_resident = Resident.query.filter(
                 Resident.contact == new_contact,
                 Resident.user_id != user.id
@@ -227,32 +221,48 @@ def account():
             )
 
         # =========================
-        # SAVE CLEAN DATA
+        # CHECK CHANGES FIRST (IMPORTANT)
         # =========================
         has_changes = False
-        
-        if profile.contact != new_contact:
+
+        current_contact = (profile.contact or "").strip()
+
+        # CONTACT
+        if current_contact != new_contact:
             profile.contact = new_contact
             has_changes = True
 
+        # RESIDENT: ADDRESS
         if user.role == "Resident":
             new_address = request.form.get('address', '').strip()
-            if profile.address != new_address:
+            current_address = (profile.address or "").strip()
+
+            if current_address != new_address:
                 profile.address = new_address
                 has_changes = True
+
+        # HEALTH WORKER: POSITION
         else:
-            if profile.position != position:
+            current_position = (profile.position or "").strip()
+
+            if current_position != position:
                 profile.position = position
                 has_changes = True
 
-        if has_changes:
-            db.session.commit()
-            flash("Profile updated successfully!", "success")
-        else:
-            flash("No changes were made to your profile.", "info")
-        
+        # =========================
+        # FINAL DECISION
+        # =========================
+        if not has_changes:
+            flash("No changes detected.", "error")
+            return redirect(url_for('account'))
+
+        db.session.commit()
+        flash("Profile updated successfully!", "success")
         return redirect(url_for('account'))
 
+    # =========================
+    # GET REQUEST
+    # =========================
     return render_template(
         'account.html',
         user=user,
@@ -468,7 +478,8 @@ def temperature_records():
         return jsonify({"error": "Unauthorized"}), 403
     
     data = Temperature.query.order_by(Temperature.id.desc()).all()
-    current_time = datetime.now().strftime("%I:%M:%S %p")
+    ph_tz = pytz.timezone("Asia/Manila")
+    current_time = datetime.now(ph_tz).strftime("%I:%M:%S %p")
     barangays = db.session.query(Temperature.barangay).distinct().all()
 
     return render_template(
@@ -572,8 +583,8 @@ def add_temperature():
     if temp_value is None:
         flash("Failed to get temperature. Check city name.", "error")
         return redirect(url_for('temperature_records'))
-
-    current_datetime = datetime.now()
+    ph_tz = pytz.timezone("Asia/Manila")
+    current_datetime = datetime.now(ph_tz)
 
     new_temp = Temperature(
         value=temp_value,
@@ -683,13 +694,13 @@ def init_scheduler():
         job = scheduler.add_job(
             func=auto_fetch_temperature,
             trigger="interval",
-            hours=1,
+            minutes=30, # ✅ every 30 minutes for more frequent updates
             id="auto_fetch_temp_job"
         )
         
         auto_running = True
         _scheduler_initialized = True
-        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every hour")
+        app.logger.info("✅ Scheduler started - Auto temp fetch scheduled every 30 minutes")
     except Exception as e:
         app.logger.error(f"❌ Scheduler init error: {e}")
 
@@ -1036,9 +1047,7 @@ def add_case():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return redirect('/')
 
-    # ✅ SAFE user_id check
     user_id = session.get('user_id')
-
     if not user_id:
         return redirect('/')
 
@@ -1049,21 +1058,20 @@ def add_case():
         flash("Health worker not found!", "error")
         return redirect(url_for('healthworker.illness_records'))
 
-    data = request.form
-
-    resident_id = data.get('resident_id')
+    resident_id = request.form.get('resident_id')
     if not resident_id:
-        flash("Please select a registered resident before adding a case.", "error")
+        flash("Please select a registered resident.", "error")
         return redirect(url_for('healthworker.illness_records'))
 
     resident = Resident.query.get(resident_id)
     if not resident:
-        flash("Resident not registered. Only registered residents can be added.", "error")
+        flash("Resident not registered.", "error")
         return redirect(url_for('healthworker.illness_records'))
 
-    symptoms = data.get('symptoms', '').strip()
-    case_date = data.get('date')
+    symptoms = request.form.get('symptoms', '').strip()
+    case_date = request.form.get('date')
 
+    # ✅ STRICT VALIDATION (no numbers allowed)
     if not re.match(r"^[A-Za-z ,.-]{5,}$", symptoms):
         flash("Enter valid symptoms (letters only, min 5 chars).", "error")
         return redirect(url_for('healthworker.illness_records'))
@@ -1074,17 +1082,24 @@ def add_case():
 
     try:
         selected_date = datetime.strptime(case_date, "%Y-%m-%d").date()
-        if selected_date != datetime.utcnow().date():
+
+        # ✅ FIXED TIMEZONE (PH TIME)
+        ph_tz = pytz.timezone("Asia/Manila")
+        today_ph = datetime.now(ph_tz).date()
+
+        if selected_date != today_ph:
             flash("Date must be today's date.", "error")
             return redirect(url_for('healthworker.illness_records'))
+
     except ValueError:
         flash("Invalid date format.", "error")
         return redirect(url_for('healthworker.illness_records'))
 
-    status = data.get('status', 'Reported')
+    status = request.form.get('status', 'Reported')
     if status not in ["Reported", "Under Treatment", "Recovered"]:
         status = "Reported"
 
+    # ✅ SAVE CASE
     case = Illness(
         symptoms=symptoms,
         status=status,
@@ -1096,7 +1111,7 @@ def add_case():
     db.session.add(case)
     db.session.commit()
 
-    flash("Case added successfully!", "success")
+    flash("Case added successfully!", "illness_success")
     return redirect(url_for('healthworker.illness_records'))
 
 # =========================
@@ -1104,33 +1119,35 @@ def add_case():
 # =========================
 @app.route('/edit_case/<int:id>', methods=['POST'])
 def edit_case(id):
-    if 'user' not in session or session.get('role') != "HealthWorker":
-        return redirect('/')
-
     case = Illness.query.get_or_404(id)
 
-    # ✅ update fields
-    case.symptoms = request.form['symptoms']
-    case.status = request.form['status']
+    new_symptoms = request.form['symptoms'].strip()
+    new_status = request.form['status'].strip()
+    new_date = request.form['date']
+    new_worker = request.form['handled_by']
 
-    # 🔥 GET SELECTED WORKER
-    worker_id = request.form.get('handled_by')
+    # ✅ Normalize date
+    current_date = case.date.strftime('%Y-%m-%d') if case.date else ""
 
-    if worker_id:
-        case.healthworker_id = int(worker_id)
+    # ✅ CHECK NO CHANGE
+    if (
+        case.symptoms.strip() == new_symptoms and
+        case.status.strip() == new_status and
+        current_date == new_date and
+        str(case.handled_by) == str(new_worker)
+    ):
+        flash("No changes detected.", "illness_error")
+        return redirect(url_for('healthworker.illness_records'))
 
-    # 🔥 UPDATE DATE
-    case_date = request.form.get('date')
-    if case_date:
-        try:
-            case.date = datetime.strptime(case_date, "%Y-%m-%d").date()
-        except ValueError:
-            flash("Invalid date format.", "error")
-            return redirect(url_for('healthworker.illness_records'))
+    # ✅ UPDATE
+    case.symptoms = new_symptoms
+    case.status = new_status
+    case.date = new_date
+    case.handled_by = new_worker
 
     db.session.commit()
 
-    flash("Case updated successfully!", "success")
+    flash("Case updated successfully!", "illness_success")
     return redirect(url_for('healthworker.illness_records'))
 
 
@@ -1146,7 +1163,27 @@ def delete_case(id):
 
     db.session.delete(case)
     db.session.commit()
-    flash("Case deleted!", "success")
+    flash("Case deleted!", "illness_success")
+
+    return redirect(url_for('healthworker.illness_records'))
+
+# =========================
+# DELETE ALL CASES FOR A RESIDENT
+# =========================
+@app.route('/delete_all_cases/<int:resident_id>', methods=['POST'])
+def delete_all_cases(resident_id):
+    if 'user' not in session or session.get('role') != "HealthWorker":
+        return redirect('/')  # ✅ was returning jsonify — but this is a form POST
+
+    try:
+        cases = Illness.query.filter_by(resident_id=resident_id).all()
+        for case in cases:
+            db.session.delete(case)
+        db.session.commit()
+        flash("All cases deleted successfully!", "illness_success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Failed to delete all cases.", "illness_error")
 
     return redirect(url_for('healthworker.illness_records'))
 

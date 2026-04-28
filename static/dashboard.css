@@ -816,6 +816,25 @@ tbody tr {
     margin-left: 5px;
 }
 
+.case-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
 /* ================= SUBMIT BUTTONS ================= */
 .submit-btn {
     background: #edeaea;

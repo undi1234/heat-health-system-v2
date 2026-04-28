@@ -458,6 +458,17 @@ window.addEventListener("DOMContentLoaded", () => {
         input.classList.remove("input-error", "invalid", "valid");
     });
 });
+
+form.addEventListener("submit", function(e) {
+    if (
+        contact.value.trim() === original.contact &&
+        address?.value?.trim() === original.address &&
+        position?.value === original.position
+    ) {
+        e.preventDefault();
+        showSuccess("No changes detected.", "error");
+    }
+});
 </script>
 
 </body>
