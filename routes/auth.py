@@ -519,5 +519,5 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out successfully!", "auth)
+    flash("Logged out successfully!", "auth")
     return redirect(url_for('auth.home'))
