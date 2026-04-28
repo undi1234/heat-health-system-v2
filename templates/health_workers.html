@@ -46,7 +46,6 @@
                 localStorage.setItem("flashMessage", {{ message | tojson }});
                 localStorage.setItem("flashType", {{ category | tojson }});
             </script>
-            {% break %}
         {% endif %}
     {% endfor %}
 {% endwith %}
