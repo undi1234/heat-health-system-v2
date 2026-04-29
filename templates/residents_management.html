@@ -37,6 +37,7 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
         {% if category != 'auth' %}
@@ -46,7 +47,19 @@
             </script>
         {% endif %}
     {% endfor %}
+=======
+{% with messages = get_flashed_messages(with_categories=true, category_filter=['resident_success', 'resident_error']) %}
+    {% if messages %}
+        <script>
+            {% for category, message in messages %}
+                localStorage.setItem("flashMessage", "{{ message }}");
+                localStorage.setItem("flashType", "{{ category }}");
+            {% endfor %}
+        </script>
+    {% endif %}
+>>>>>>> d4a83ef (fix flash message)
 {% endwith %}
+
 
 
 <!-- 🔴 TOPBAR -->
@@ -370,18 +383,14 @@ document.getElementById("editForm").addEventListener("submit", function(e) {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    const msg = localStorage.getItem("flashMessage") || localStorage.getItem("successMessage");
+    const msg = localStorage.getItem("flashMessage");
     const type = localStorage.getItem("flashType");
 
     if (msg) {
-        let modalType = "success";
-        if (type === "error" || type === "info") modalType = "error";
-
-        showSuccess(msg, modalType);
+        showSuccess(msg, type?.includes("error") ? "error" : "success");
 
         localStorage.removeItem("flashMessage");
         localStorage.removeItem("flashType");
-        localStorage.removeItem("successMessage");
     }
 });
 

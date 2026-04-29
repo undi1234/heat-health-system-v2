@@ -37,7 +37,7 @@ from models import db, User, Resident, HealthWorker, Temperature, HeatIndex, Ill
 # IMPORT BLUEPRINTS
 # =========================
 from routes.auth import auth_bp
-from routes.resident import resident_bp
+from routes.resident import resident_bp      
 from utils import compute_heat_index, get_heat_level
 from routes.healthworker import healthworker_bp
 from markupsafe import escape
@@ -253,11 +253,11 @@ def account():
         # FINAL DECISION
         # =========================
         if not has_changes:
-            flash("No changes detected.", "error")
+            flash("No changes detected.", "profile_error")
             return redirect(url_for('account'))
 
         db.session.commit()
-        flash("Profile updated successfully!", "success")
+        flash("Profile updated successfully!", "profile_success")
         return redirect(url_for('account'))
 
     # =========================
@@ -361,7 +361,7 @@ def change_password():
     user.password = generate_password_hash(new_password)
     db.session.commit()
 
-    flash("Password updated successfully!", "success")
+    flash("Password updated successfully!", "password_success")
     return redirect(url_for('account'))
 
 # =========================
@@ -403,14 +403,14 @@ def delete_resident(id):
         db.session.delete(r)
         db.session.commit()
 
-        flash("Resident and account deleted successfully!", "success")
+        flash("Resident and account deleted successfully!", "resident_success")
 
     except IntegrityError:
         db.session.rollback()
 
         flash(
             "Cannot delete this resident because it is used in illness records.",
-            "error"
+            "resident_error"
         )
 
     return redirect(url_for('healthworker.residents_management'))
@@ -430,7 +430,7 @@ def update_resident(id):
 
     db.session.commit()
 
-    flash("Resident updated successfully!", "success")
+    flash("Resident updated successfully!", "resident_success")
     return redirect(url_for('healthworker.residents_management'))
 
 # =========================
@@ -1027,59 +1027,48 @@ def add_case():
     if 'user' not in session or session.get('role') != "HealthWorker":
         return redirect('/')
 
+    # ✅ FIX: get user_id from session
     user_id = session.get('user_id')
-    if not user_id:
-        return redirect('/')
 
-    worker_id = request.form.get('handled_by')
-    worker = HealthWorker.query.get(worker_id)
+    worker = HealthWorker.query.filter_by(user_id=user_id).first()
 
     if not worker:
-        flash("Health worker not found!", "error")
+        flash("Health worker not found!", "illness_error")
         return redirect(url_for('healthworker.illness_records'))
 
     resident_id = request.form.get('resident_id')
     if not resident_id:
-        flash("Please select a registered resident.", "error")
+        flash("Please select a resident.", "illness_error")
         return redirect(url_for('healthworker.illness_records'))
 
     resident = Resident.query.get(resident_id)
     if not resident:
-        flash("Resident not registered.", "error")
+        flash("Resident not found.", "illness_error")
         return redirect(url_for('healthworker.illness_records'))
 
     symptoms = request.form.get('symptoms', '').strip()
+
+    if not re.match(r"^[A-Za-z0-9 ,.-]{3,}$", symptoms):
+        flash("Enter valid symptoms.", "illness_error")
+        return redirect(url_for('healthworker.illness_records'))
+
     case_date = request.form.get('date')
-
-    # ✅ STRICT VALIDATION (no numbers allowed)
-    if not re.match(r"^[A-Za-z ,.-]{5,}$", symptoms):
-        flash("Enter valid symptoms (letters only, min 5 chars).", "error")
-        return redirect(url_for('healthworker.illness_records'))
-
-    if not case_date:
-        flash("Date is required.", "error")
-        return redirect(url_for('healthworker.illness_records'))
 
     try:
         selected_date = datetime.strptime(case_date, "%Y-%m-%d").date()
-
-        # ✅ FIXED TIMEZONE (PH TIME)
         ph_tz = pytz.timezone("Asia/Manila")
         today_ph = datetime.now(ph_tz).date()
 
-        if selected_date != today_ph:
-            flash("Date must be today's date.", "error")
+        if selected_date > today_ph:
+            flash("Date cannot be in the future.", "illness_error")
             return redirect(url_for('healthworker.illness_records'))
 
-    except ValueError:
-        flash("Invalid date format.", "error")
+    except:
+        flash("Invalid date.", "illness_error")
         return redirect(url_for('healthworker.illness_records'))
 
     status = request.form.get('status', 'Reported')
-    if status not in ["Reported", "Under Treatment", "Recovered"]:
-        status = "Reported"
 
-    # ✅ SAVE CASE
     case = Illness(
         symptoms=symptoms,
         status=status,
@@ -1236,11 +1225,11 @@ def delete_health_worker(id):
         db.session.delete(worker)
         db.session.commit()
 
-        flash("Health worker deleted successfully!", "success")
+        flash("Health worker deleted successfully!", "worker_success")
 
     except Exception as e:
         db.session.rollback()
-        flash("Delete failed. Try again.", "error")
+        flash("Delete failed. Try again.", "worker_error")
 
     return redirect(url_for('healthworker.health_workers'))
 
@@ -1258,13 +1247,13 @@ def update_worker(id):
     old_position = worker.position.strip()
 
     if new_position.lower() == old_position.lower():
-        flash("No changes detected.", "error")
+        flash("No changes detected.", "worker_error")
         return redirect(url_for('healthworker.health_workers'))
 
     worker.position = new_position
     db.session.commit()
 
-    flash("Health worker updated successfully!", "success")
+    flash("Health worker updated successfully!", "worker_success")
     return redirect(url_for('healthworker.health_workers'))
 
 

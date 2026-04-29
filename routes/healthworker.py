@@ -138,38 +138,41 @@ def add_health_worker():
     
     data = request.form
 
-    # ✅ GET VALUES SAFELY
     name = data.get('name', '').strip()
     position = data.get('position', '').strip()
     contact = data.get('contact', '').strip()
 
-    # ❌ VALIDATION
     if not name or not position or not contact:
-        flash("All fields are required!", "error")
+        flash("All fields are required!", "worker_error")
+        return redirect(url_for('healthworker.health_workers'))
+    
+    existing = HealthWorker.query.filter_by(contact=contact).first()
+    if existing:
+        flash("Contact already exists!", "worker_error")
         return redirect(url_for('healthworker.health_workers'))
 
-    if not contact.isdigit() or len(contact) < 10:
-        flash("Contact must be a valid number!", "error")
-        return redirect(url_for('healthworker.health_workers'))
+    try:
+        worker = HealthWorker(
+            name=name,
+            position=position,
+            contact=contact
+        )
 
-    # 🔒 POSITION VALIDATION
-    valid_positions = ["Nurse", "Midwife", "Barangay Health Worker"]
-    if position not in valid_positions:
-        flash("Invalid position!", "error")
-        return redirect(url_for('healthworker.health_workers'))
+        db.session.add(worker)
+        db.session.commit()
 
-    # ✅ CREATE WORKER
-    worker = HealthWorker(
-        name=name,
-        position=position,
-        contact=contact
-    )
+        flash("Health Worker added successfully!", "worker_success")
 
-    db.session.add(worker)
-    db.session.commit()
+    except IntegrityError as e:
+        db.session.rollback()
 
-    flash("Health Worker added successfully!", "success")
+        if "health_worker_contact_key" in str(e):
+            flash("Contact already exists! Please use a different number.", "worker_error")
+        else:
+            flash("Database error occurred!", "worker_error")
+
     return redirect(url_for('healthworker.health_workers'))
+
 
 # =========================
 # DELETE HEALTH WORKERS
@@ -182,7 +185,7 @@ def delete_health_worker(id):
     worker = HealthWorker.query.get_or_404(id)
 
     if worker.user_id and worker.user_id == session.get('user_id'):
-        flash("You cannot delete your own account!", "error")
+        flash("You cannot delete your own account!", "worker_error")
         return redirect(url_for('healthworker.health_workers'))
 
     try:
@@ -196,14 +199,14 @@ def delete_health_worker(id):
         db.session.delete(worker)
         db.session.commit()
 
-        flash("Health worker and account deleted successfully!", "success")
+        flash("Health worker deleted successfully!", "worker_success")
 
     except IntegrityError:
         db.session.rollback()
 
         flash(
             "Cannot delete this health worker because they are assigned to illness records.",
-            "error"
+            "worker_error"
         )
 
     return redirect(url_for('healthworker.health_workers'))
@@ -222,7 +225,7 @@ def add_resident():
     contact = request.form.get('contact')
 
     if not all([name, gender, address, contact]):
-        flash("All fields are required!", "error")
+        flash("All fields are required!", "worker_error")
         return redirect(url_for('healthworker.residents_management'))
 
     resident = Resident(
@@ -235,7 +238,7 @@ def add_resident():
     db.session.add(resident)
     db.session.commit()
 
-    flash("Resident added successfully!", "success")
+    flash("Resident added successfully!", "resident_success")
     return redirect(url_for('healthworker.residents_management'))
 
 

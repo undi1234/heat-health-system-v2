@@ -10,7 +10,15 @@
 </head>
 
 <body class="login-page">
+
 <div class="frame">
+    <div id="flash-container">
+        {% if general_error %}
+            <div class="flash error">
+                {{ general_error }}
+            </div>
+        {% endif %}
+    </div>
 
     <div class="icon">
         <span>🌡️</span>
@@ -19,11 +27,19 @@
     <h2>HEAT HEALTH MONITORING SYSTEM</h2>
     <p class="subtitle">Barangay Temperature & Heat Index Monitoring</p>
 
-    {% if general_error %}
-        <div class="flash error">
-            {{ general_error }}
-        </div>
-    {% endif %}
+
+    {% with messages = get_flashed_messages(
+        with_categories=true,
+        category_filter=['auth_success', 'auth_danger']
+    ) %}
+        {% if messages %}
+            <script>
+                localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
+                localStorage.setItem("flashType", "{{ messages[0][0] }}");
+            </script>
+        {% endif %}
+    {% endwith %}
+
 
     <!-- ✅ FORM CONNECTED -->
     <form action="/login" method="POST" onsubmit="return validateLogin()">

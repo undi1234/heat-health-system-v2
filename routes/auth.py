@@ -410,12 +410,12 @@ def register():
             ))
 
         db.session.commit()
-        flash("Account created successfully! You can now log in.", "success")
+        flash("Account created successfully! You can now log in.", "auth_success")
         return redirect(url_for('auth.home'))
     except Exception as e:
         db.session.rollback()
         print("Registration error:", e)
-        flash("An error occurred during registration. Please try again.", "danger")
+        flash("An error occurred during registration. Please try again.", "auth_danger")
         return render_template('register.html', form_data=data)
 
 
@@ -430,9 +430,8 @@ def login():
 
     # ❗ STOP EMPTY
     if not username or not password:
-        return render_template('index.html',
-            general_error="Please enter username and password"
-        )
+        flash("Please enter username and password", "auth_danger")
+        return redirect(url_for('auth.home'))
 
 
     # Get attempts FIRST
@@ -451,7 +450,7 @@ def login():
     # 🔒 CHECK LOCK
     if lock_time:
         if (time.time() - lock_time) < 300:
-            session['general_error'] = "Too many attempts. Try again in 5 minutes."
+            flash("Too many attempts. Try again in 5 minutes.", "auth_danger")
             return redirect(url_for('auth.home'))
         else:
             session.pop('lock_time', None)
@@ -505,8 +504,13 @@ def login():
     session['fullname'] = user.fullname
     session.permanent = True
 
+<<<<<<< HEAD
     flash("Login successful!", "auth")
     
+=======
+    session['just_logged_in'] = True
+
+>>>>>>> d4a83ef (fix flash message)
     if user.role == "Resident":
         return redirect(url_for('resident.resident_dashboard'))
     else:
@@ -519,5 +523,9 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
+<<<<<<< HEAD
     flash("Logged out successfully!", "auth")
+=======
+    session['just_logged_out'] = True
+>>>>>>> d4a83ef (fix flash message)
     return redirect(url_for('auth.home'))

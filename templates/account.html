@@ -15,6 +15,7 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
         {% if category != 'auth' %}
@@ -24,6 +25,18 @@
             </script>
         {% endif %}
     {% endfor %}
+=======
+{% with messages = get_flashed_messages(
+    with_categories=true,
+    category_filter=['profile_success', 'profile_error', 'password_success', 'password_error']
+) %}
+    {% if messages %}
+        <script>
+            localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
+            localStorage.setItem("flashType", "{{ messages[0][0] }}");
+        </script>
+    {% endif %}
+>>>>>>> d4a83ef (fix flash message)
 {% endwith %}
 
 
@@ -140,7 +153,7 @@
             </div>
 
             <div class="button-group full">
-                <button type="submit" class="submit-btn">Update Profile</button>
+                <button type="submit" class="submit-btn" disabled>Update Profile</button>
             </div>
             
         </form>
@@ -247,15 +260,6 @@ function togglePassword(el) {
 
 
 <script>
-// ✅ PROFILE UPDATE
-document.getElementById("profileForm").addEventListener("submit", function(e) {
-    if (document.querySelector(".invalid")) {
-        e.preventDefault();
-        showModal("Please fix the errors first.", "error");
-        return;
-    }
-
-});
 
 // ✅ PASSWORD UPDATE
 document.getElementById("passwordForm").addEventListener("submit", function(e) {
@@ -288,6 +292,26 @@ function showModal(message, type = "success") {
 }
 
 const form = document.getElementById("profileForm");
+const submitBtn = document.querySelector(".submit-btn");
+
+form.addEventListener("input", () => {
+    const contact = document.querySelector("input[name='contact']");
+    const address = document.querySelector("input[name='address']");
+    const position = document.querySelector("select[name='position']");
+
+    const original = {
+        contact: "{{ profile.contact }}".trim(),
+        address: "{{ profile.address or '' }}".trim(),
+        position: "{{ profile.position or '' }}"
+    };
+
+    const changed =
+        (contact?.value.trim() || "") !== original.contact ||
+        (address?.value.trim() || "") !== original.address ||
+        (position?.value || "") !== original.position;
+
+    submitBtn.disabled = !changed;
+});
 
 form.addEventListener("submit", function(e) {
 
@@ -462,12 +486,14 @@ if (confirmPassword && newPassword) {
     });
 }
 
-let confirmError = confirmPassword.closest(".form-group").querySelector(".error-text");
+if (confirmPassword) {
+    let confirmError = confirmPassword.closest(".form-group").querySelector(".error-text");
 
-if (!confirmError) {
-    confirmError = document.createElement("small");
-    confirmError.className = "error-text";
-    confirmPassword.closest(".form-group").appendChild(confirmError);
+    if (!confirmError) {
+        confirmError = document.createElement("small");
+        confirmError.className = "error-text";
+        confirmPassword.closest(".form-group").appendChild(confirmError);
+    }
 }
 </script>
 
@@ -490,7 +516,11 @@ window.addEventListener("DOMContentLoaded", () => {
     const flashType = localStorage.getItem("flashType");
 
     if (flashMsg) {
-        showModal(flashMsg, flashType === "info" ? "error" : "success");
+        if (flashType.includes("error")) {
+            showModal(flashMsg, "error");
+        } else {
+            showModal(flashMsg, "success");
+        }
 
         localStorage.removeItem("flashMessage");
         localStorage.removeItem("flashType");

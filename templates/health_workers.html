@@ -39,6 +39,7 @@
     </div>
 </div>
 
+<<<<<<< HEAD
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
         {% if category != 'auth' %}
@@ -48,6 +49,17 @@
             </script>
         {% endif %}
     {% endfor %}
+=======
+{% with messages = get_flashed_messages(with_categories=true, category_filter=['worker_success', 'worker_error']) %}
+    {% if messages %}
+        <script>
+            {% for category, message in messages %}
+                localStorage.setItem("flashMessage", "{{ message }}");
+                localStorage.setItem("flashType", "{{ category }}");
+            {% endfor %}
+        </script>
+    {% endif %}
+>>>>>>> d4a83ef (fix flash message)
 {% endwith %}
 
 
@@ -324,9 +336,12 @@ if (addForm) {
 // ✅ UPDATE
 document.getElementById("editWorkerForm").addEventListener("submit", function(e) {
     const newPosition = document.getElementById("worker_position").value.trim().toLowerCase();
-    const originalPosition = (originalWorker.position || "").trim().toLowerCase();
+    const newContact = document.getElementById("worker_contact").value.trim();
 
-    if (newPosition === originalPosition) {
+    const originalPosition = (originalWorker.position || "").trim().toLowerCase();
+    const originalContact = (originalWorker.contact || "").trim();
+
+    if (newPosition === originalPosition && newContact === originalContact) {
         e.preventDefault();
         showSuccess("No changes detected.", "error");
         return;
@@ -341,18 +356,18 @@ document.getElementById("deleteForm").addEventListener("submit", () => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-    const msg = localStorage.getItem("flashMessage") || localStorage.getItem("successMessage");
+    const msg = localStorage.getItem("flashMessage");
     const type = localStorage.getItem("flashType");
 
-    if (msg) {
-        let modalType = "success";
-        if (type === "error" || type === "info") modalType = "error";
-
-        showSuccess(msg, modalType);
+    // ❌ BLOCK logout message
+    if (type === "auth_success") {
+        localStorage.removeItem("flashMessage");
+        localStorage.removeItem("flashType");
+    } else if (msg) {
+        showSuccess(msg, type?.includes("error") ? "error" : "success");
 
         localStorage.removeItem("flashMessage");
         localStorage.removeItem("flashType");
-        localStorage.removeItem("successMessage");
     }
 });
 

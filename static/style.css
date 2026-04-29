@@ -328,6 +328,18 @@ h2 {
     font-size: 14px;
 }
 
+#flash-container {
+    width: 100%;
+    display: block;
+}
+
+.flash {
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+}
+
+
 /* SUCCESS */
 .flash.success {
     background: #e6f9f0;

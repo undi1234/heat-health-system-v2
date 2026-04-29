@@ -37,13 +37,15 @@ function showSuccess(message, type = "success") {
     </div>
 </div>
 
-{% with messages = get_flashed_messages(with_categories=true, category_filter=["illness_success", "illness_error"]) %}
+{% with messages = get_flashed_messages(with_categories=true, category_filter=['illness_success', 'illness_error']) %}
     {% if messages %}
-        <script>
-            // ✅ Store in localStorage so it shows AFTER DOM is fully ready
-            localStorage.setItem("flashMessage", "{{ messages[0][1] }}");
-            localStorage.setItem("flashType", "{{ messages[0][0] }}");
-        </script>
+        {% for category, message in messages %}
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    showSuccess("{{ message }}", "{{ category }}");
+                });
+            </script>
+        {% endfor %}
     {% endif %}
 {% endwith %}
 
@@ -352,42 +354,6 @@ function showSuccess(message, type = "success") {
 
     </div>
 </div>
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-    // ✅ SHOW FLASH MESSAGE (from server redirect)
-    const flashMsg = localStorage.getItem("flashMessage");
-    const flashType = localStorage.getItem("flashType");
-    if (flashMsg) {
-        showSuccess(flashMsg, flashType || "success");
-        localStorage.removeItem("flashMessage");
-        localStorage.removeItem("flashType");
-    }
-
-    // ✅ SHOW SUCCESS MESSAGE (from client-side submit)
-    const message = localStorage.getItem("successMessage");
-    if (message) {
-        showSuccess(message);
-        localStorage.removeItem("successMessage");
-    }
-
-
-
-    // ✅ DELETE FORM
-    const deleteForm = document.getElementById("deleteForm");
-    if (deleteForm) {
-        deleteForm.addEventListener("submit", () => {
-            if (deleteForm.action.includes("delete_all_cases")) {
-                localStorage.setItem("successMessage", "All cases deleted successfully!");
-            } else {
-                localStorage.setItem("successMessage", "Case deleted successfully!");
-            }
-        });
-    }
-
-});
-</script>
 
 <script>
 function openDeleteModal(id, name, type) {
