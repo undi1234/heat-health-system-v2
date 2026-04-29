@@ -15,17 +15,6 @@
     </div>
 </div>
 
-<<<<<<< HEAD
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        {% if category != 'auth' %}
-            <script>
-                localStorage.setItem("flashMessage", "{{ message }}");
-                localStorage.setItem("flashType", "{{ category }}");
-            </script>
-        {% endif %}
-    {% endfor %}
-=======
 {% with messages = get_flashed_messages(
     with_categories=true,
     category_filter=['profile_success', 'profile_error', 'password_success', 'password_error']
@@ -36,7 +25,6 @@
             localStorage.setItem("flashType", "{{ messages[0][0] }}");
         </script>
     {% endif %}
->>>>>>> d4a83ef (fix flash message)
 {% endwith %}
 
 

@@ -504,13 +504,10 @@ def login():
     session['fullname'] = user.fullname
     session.permanent = True
 
-<<<<<<< HEAD
     flash("Login successful!", "auth")
     
-=======
     session['just_logged_in'] = True
 
->>>>>>> d4a83ef (fix flash message)
     if user.role == "Resident":
         return redirect(url_for('resident.resident_dashboard'))
     else:
@@ -523,9 +520,6 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     session.clear()
-<<<<<<< HEAD
     flash("Logged out successfully!", "auth")
-=======
     session['just_logged_out'] = True
->>>>>>> d4a83ef (fix flash message)
     return redirect(url_for('auth.home'))

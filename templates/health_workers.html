@@ -39,17 +39,6 @@
     </div>
 </div>
 
-<<<<<<< HEAD
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        {% if category != 'auth' %}
-            <script>
-                localStorage.setItem("flashMessage", {{ message | tojson }});
-                localStorage.setItem("flashType", {{ category | tojson }});
-            </script>
-        {% endif %}
-    {% endfor %}
-=======
 {% with messages = get_flashed_messages(with_categories=true, category_filter=['worker_success', 'worker_error']) %}
     {% if messages %}
         <script>
@@ -59,7 +48,6 @@
             {% endfor %}
         </script>
     {% endif %}
->>>>>>> d4a83ef (fix flash message)
 {% endwith %}
 
 
