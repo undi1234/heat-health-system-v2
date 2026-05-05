@@ -91,7 +91,7 @@ def init_db():
 def before_request():
     """Ensure DB is initialized before first request"""
     if not _db_initialized:
-        init_db()
+        return None
 
 # Application factory support
 def create_app():
